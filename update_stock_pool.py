@@ -40,17 +40,16 @@ def is_common_a_share(symbol: str, name: str, board: str) -> bool:
         "B股",
         "B 股",
         "ETF",
-        "基金",
+        "指数",
+        "可转债",
         "LOF",
         "REIT",
+        "基金",
         "债",
         "优先",
+        "ST",
     ]
     if any(token in upper_name for token in blocked_tokens):
-        return False
-
-    # Keep the first expandable version focused on ordinary A shares.
-    if "ST" in upper_name:
         return False
 
     return True
@@ -163,11 +162,13 @@ def main():
     if full_stock_pool.empty:
         raise SystemExit("未获取到可用 A 股股票池，已停止。")
 
+    # 只保留沪深主板股票
     stock_pool = full_stock_pool[full_stock_pool["board"] == "main_board"].copy()
 
+    # 保存全量股票池（用于参考）
     full_stock_pool.to_csv("full_stock_pool.csv", index=False, encoding="utf-8-sig")
+    # 保存主板股票池（用于本项目）
     stock_pool.to_csv("stock_pool.csv", index=False, encoding="utf-8-sig")
-    result = save_stock_basic_to_mysql(full_stock_pool)
 
     print("股票池更新完成")
     print("数据源：", source)
@@ -180,9 +181,6 @@ def main():
     print("本项目默认股票池数量：", len(stock_pool))
     print("full_stock_pool.csv 已生成")
     print("stock_pool.csv 已生成")
-    if isinstance(result, dict):
-        print("stock_basic 成功写入/更新：", result.get("saved", 0))
-        print("stock_basic 跳过数量：", result.get("skipped", 0))
 
 
 if __name__ == "__main__":
