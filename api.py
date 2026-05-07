@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from factor_config import CATEGORY_WEIGHTS, FACTOR_CONFIG
 from scoring import calculate_score, get_latest_strategy_data
+from stock_utils import BOARD_LABELS, VALID_BOARD_FILTERS
 
 
 app = FastAPI(
@@ -30,6 +31,7 @@ STOCK_RESPONSE_FIELDS = [
     "symbol",
     "name",
     "market",
+    "board",
     "trade_date",
     "report_date",
     "close_price",
@@ -144,6 +146,8 @@ def _validate_stock_query_weights(
 
     for module_name, module_weight, factors in module_factor_rules:
         factor_total = sum(effective_factor_weights[factor] for factor in factors)
+        if abs(factor_total - 100) > 0.0001:
+            return f"{module_name}模块内因子权重之和必须等于 100%，当前合计为 {factor_total:.2f}%。"
         if module_weight > 0 and factor_total <= 0:
             return f"{module_name}权重大于 0 时，模块内至少要有一个因子权重大于 0。"
 
@@ -167,13 +171,16 @@ def get_stocks(
     quality_weight: float = Query(30, description="质量模块权重"),
     growth_weight: float = Query(25, description="成长模块权重"),
     dividend_weight: float = Query(10, description="分红模块权重"),
+    board: str | None = Query(None, description="股票板块：main_board/gem/star/bse/all"),
+    market: str | None = Query(None, description="市场：sh/sz/bj"),
     limit: int = Query(50, description="返回股票数量", ge=1, le=500),
-    pe_weight: float | None = Query(None, description="兼容旧接口：PE_TTM 因子权重"),
-    pb_weight: float | None = Query(None, description="兼容旧接口：PB 因子权重"),
-    roe_weight: float | None = Query(None, description="ROE 因子权重"),
-    revenue_growth_weight: float | None = Query(None, description="营收增长率因子权重"),
-    profit_growth_weight: float | None = Query(None, description="净利润增长率因子权重"),
-    dividend_yield_weight: float | None = Query(None, description="股息率因子权重"),
+    offset: int = Query(0, description="分页偏移量", ge=0),
+    pe_weight: float | None = Query(63, description="兼容旧接口：PE_TTM 因子权重"),
+    pb_weight: float | None = Query(37, description="兼容旧接口：PB 因子权重"),
+    roe_weight: float | None = Query(100, description="ROE 因子权重"),
+    revenue_growth_weight: float | None = Query(50, description="营收增长率因子权重"),
+    profit_growth_weight: float | None = Query(50, description="净利润增长率因子权重"),
+    dividend_yield_weight: float | None = Query(100, description="股息率因子权重"),
 ):
     """获取最新交易日的多因子评分结果。"""
     validation_error = _validate_stock_query_weights(
@@ -190,20 +197,45 @@ def get_stocks(
     )
 
     if validation_error:
+        current_board = board or "main_board"
         return {
             "code": 0,
             "message": validation_error,
+            "current_board": current_board,
+            "total": 0,
             "count": 0,
+            "limit": limit,
+            "offset": offset,
+            "has_next": False,
             "data": [],
         }
 
-    df = get_latest_strategy_data()
+    current_board = board or "main_board"
+    if current_board not in VALID_BOARD_FILTERS:
+        return {
+            "code": 0,
+            "message": f"board 参数不支持：{current_board}",
+            "current_board": current_board,
+            "total": 0,
+            "count": 0,
+            "limit": limit,
+            "offset": offset,
+            "has_next": False,
+            "data": [],
+        }
+
+    df = get_latest_strategy_data(board=current_board, market=market)
 
     if df.empty:
         return {
-            "code": 0,
-            "message": "数据库中暂无估值数据，请先运行数据采集流程。",
+            "code": 1,
+            "message": "success",
+            "current_board": current_board,
+            "total": 0,
             "count": 0,
+            "limit": limit,
+            "offset": offset,
+            "has_next": False,
             "data": [],
         }
 
@@ -221,7 +253,7 @@ def get_stocks(
     if dividend_yield_weight is not None:
         factor_weights["dividend_yield"] = dividend_yield_weight
 
-    result = calculate_score(
+    scored = calculate_score(
         df,
         factor_weights=factor_weights or None,
         category_weights={
@@ -230,12 +262,19 @@ def get_stocks(
             "growth": growth_weight,
             "dividend": dividend_weight,
         },
-    ).head(limit)
+    )
+    total = len(scored)
+    result = scored.iloc[offset:offset + limit]
 
     return {
         "code": 1,
         "message": "success",
+        "current_board": current_board,
+        "total": total,
         "count": len(result),
+        "limit": limit,
+        "offset": offset,
+        "has_next": offset + limit < total,
         "data": _records(result, STOCK_RESPONSE_FIELDS),
     }
 
@@ -247,7 +286,7 @@ def get_low_pe_stocks(
     limit: int = Query(50, description="返回股票数量", ge=1, le=500),
 ):
     """获取低 PE、低 PB 股票，并使用新策略评分。"""
-    df = get_latest_strategy_data()
+    df = get_latest_strategy_data(board="main_board")
 
     if df.empty:
         return {

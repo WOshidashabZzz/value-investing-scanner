@@ -1,5 +1,37 @@
 USE stock_screener;
 
+SET @has_board := (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'stock_basic'
+      AND COLUMN_NAME = 'board'
+);
+SET @sql := IF(
+    @has_board = 0,
+    'ALTER TABLE stock_basic ADD COLUMN board VARCHAR(30) NULL COMMENT ''股票板块：main_board/gem/star/bse/unknown'' AFTER market',
+    'SELECT ''stock_basic.board already exists'''
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_idx_board := (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'stock_basic'
+      AND INDEX_NAME = 'idx_board'
+);
+SET @sql := IF(
+    @has_idx_board = 0,
+    'CREATE INDEX idx_board ON stock_basic (board)',
+    'SELECT ''stock_basic.idx_board already exists'''
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 CREATE TABLE IF NOT EXISTS stock_financial (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     stock_id INT NOT NULL,

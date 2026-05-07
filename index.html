@@ -170,6 +170,21 @@
             box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.12);
         }
 
+        input[readonly] {
+            color: #6b7280;
+            background: #f3f4f6;
+            cursor: not-allowed;
+        }
+
+        select {
+            min-width: 118px;
+            padding: 8px 9px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            background: #fff;
+            outline: none;
+        }
+
         .btn {
             padding: 9px 18px;
             border: none;
@@ -309,6 +324,26 @@
             color: #4b5563;
             border: 1px solid #eef2f7;
             line-height: 1.8;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            margin: -8px 0 16px;
+        }
+
+        .page-info {
+            color: #4b5563;
+            font-size: 14px;
+            min-width: 88px;
+            text-align: center;
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
         }
 
         .table-card {
@@ -513,7 +548,18 @@
                 <input type="number" id="limit" value="50" min="1" max="500" step="1">
             </div>
 
-            <button class="btn btn-primary" onclick="loadStocks()">重新计算</button>
+            <div class="control-item">
+                <label>股票范围</label>
+                <select id="boardFilter">
+                    <option value="main_board" selected>沪深主板</option>
+                    <option value="gem">创业板</option>
+                    <option value="star">科创板</option>
+                    <option value="bse">北交所</option>
+                    <option value="all">全部已入库</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" onclick="loadStocks(true)">重新计算</button>
             <button class="btn btn-secondary" onclick="resetWeights()">恢复默认</button>
         </div>
 
@@ -523,12 +569,12 @@
                 <div class="factor-inputs">
                     <div class="control-item">
                         <label>PE</label>
-                        <input type="number" id="peWeight" value="22" min="0" max="100" step="0.5">
+                        <input type="number" id="peWeight" value="63" min="0" max="100" step="0.5">
                         <span>%</span>
                     </div>
                     <div class="control-item">
                         <label>PB</label>
-                        <input type="number" id="pbWeight" value="13" min="0" max="100" step="0.5">
+                        <input type="number" id="pbWeight" value="37" min="0" max="100" step="0.5">
                         <span>%</span>
                     </div>
                 </div>
@@ -539,7 +585,7 @@
                 <div class="factor-inputs">
                     <div class="control-item">
                         <label>ROE</label>
-                        <input type="number" id="roeWeight" value="30" min="0" max="100" step="0.5">
+                        <input type="number" id="roeWeight" value="100" min="100" max="100" step="1" readonly>
                         <span>%</span>
                     </div>
                 </div>
@@ -550,12 +596,12 @@
                 <div class="factor-inputs">
                     <div class="control-item">
                         <label class="factor-long-label">营收增长率</label>
-                        <input type="number" id="revenueGrowthWeight" value="12.5" min="0" max="100" step="0.5">
+                        <input type="number" id="revenueGrowthWeight" value="50" min="0" max="100" step="0.5">
                         <span>%</span>
                     </div>
                     <div class="control-item">
                         <label class="factor-long-label">净利润增长率</label>
-                        <input type="number" id="profitGrowthWeight" value="12.5" min="0" max="100" step="0.5">
+                        <input type="number" id="profitGrowthWeight" value="50" min="0" max="100" step="0.5">
                         <span>%</span>
                     </div>
                 </div>
@@ -566,7 +612,7 @@
                 <div class="factor-inputs">
                     <div class="control-item">
                         <label>股息率</label>
-                        <input type="number" id="dividendYieldWeight" value="10" min="0" max="100" step="0.5">
+                        <input type="number" id="dividendYieldWeight" value="100" min="100" max="100" step="1" readonly>
                         <span>%</span>
                     </div>
                 </div>
@@ -691,6 +737,12 @@
         数据加载中...
     </div>
 
+    <div class="pagination">
+        <button class="btn btn-secondary" id="prevPageBtn" onclick="previousPage()">上一页</button>
+        <span class="page-info" id="pageInfo">第 1 页</span>
+        <button class="btn btn-secondary" id="nextPageBtn" onclick="nextPage()">下一页</button>
+    </div>
+
     <div class="table-card">
         <table>
             <thead>
@@ -721,6 +773,8 @@
     </div>
 
     <div class="footer">
+        本系统第一版默认展示沪深主板股票。创业板、科创板、北交所公司的成长属性、波动水平和估值逻辑与主板存在差异，不建议直接与主板股票混合排名。后续可作为独立板块单独评分。
+        <br>
         说明：评分采用当前股票池内的相对排名法。分数越高，表示该股票在当前因子体系下越值得进一步关注，但不代表未来收益或买入建议。
         <br>
         建议结合行业、财报、公司基本面和市场风险进一步分析。
@@ -737,6 +791,19 @@
         profit_growth: "净利润增长率",
         dividend_yield: "股息率"
     };
+
+    const boardNameMap = {
+        main_board: "沪深主板",
+        gem: "创业板",
+        star: "科创板",
+        bse: "北交所",
+        all: "全部已入库"
+    };
+
+    let currentOffset = 0;
+    let currentLimit = 50;
+    let currentTotal = 0;
+    let currentHasNext = false;
 
     function formatFactorNames(factorStr) {
         if (!factorStr) return "-";
@@ -785,15 +852,16 @@
         document.getElementById("qualityWeight").value = 30;
         document.getElementById("growthWeight").value = 25;
         document.getElementById("dividendWeight").value = 10;
-        document.getElementById("peWeight").value = 22;
-        document.getElementById("pbWeight").value = 13;
-        document.getElementById("roeWeight").value = 30;
-        document.getElementById("revenueGrowthWeight").value = 12.5;
-        document.getElementById("profitGrowthWeight").value = 12.5;
-        document.getElementById("dividendYieldWeight").value = 10;
+        document.getElementById("peWeight").value = 63;
+        document.getElementById("pbWeight").value = 37;
+        document.getElementById("roeWeight").value = 100;
+        document.getElementById("revenueGrowthWeight").value = 50;
+        document.getElementById("profitGrowthWeight").value = 50;
+        document.getElementById("dividendYieldWeight").value = 100;
         document.getElementById("limit").value = 50;
+        document.getElementById("boardFilter").value = "main_board";
         clearValidationMessage();
-        loadStocks();
+        loadStocks(true);
     }
 
     function setValidationMessage(message, fieldIds = []) {
@@ -846,6 +914,7 @@
             dividendYieldWeight: readNumberInput("dividendYieldWeight")
         };
         const limit = readNumberInput("limit");
+        const board = document.getElementById("boardFilter").value || "main_board";
 
         const invalidWeightIds = Object.entries(weights)
             .filter(([, value]) => value === null || value < 0 || value > 100)
@@ -908,6 +977,13 @@
             const moduleWeight = weights[rule.moduleId];
             const factorTotal = rule.factorIds.reduce((sum, id) => sum + factorWeights[id], 0);
 
+            if (Math.abs(factorTotal - 100) > 0.0001) {
+                setValidationMessage(`${rule.moduleName}模块内因子权重之和必须等于 100%，当前合计为 ${factorTotal.toFixed(2)}%。`, [
+                    ...rule.factorIds
+                ]);
+                return null;
+            }
+
             if (moduleWeight > 0 && factorTotal <= 0) {
                 setValidationMessage(`${rule.moduleName}权重大于 0 时，模块内至少要有一个因子权重大于 0。`, [
                     rule.moduleId,
@@ -923,17 +999,47 @@
         }
 
         clearValidationMessage();
-        return {...weights, ...factorWeights, limit};
+        return {...weights, ...factorWeights, limit, board};
     }
 
-    async function loadStocks() {
+    function updatePaginationControls() {
+        const pageInfo = document.getElementById("pageInfo");
+        const prevButton = document.getElementById("prevPageBtn");
+        const nextButton = document.getElementById("nextPageBtn");
+        const currentPage = Math.floor(currentOffset / currentLimit) + 1;
+
+        pageInfo.innerText = `第 ${currentPage} 页`;
+        prevButton.disabled = currentOffset <= 0;
+        nextButton.disabled = !currentHasNext;
+    }
+
+    function previousPage() {
+        currentOffset = Math.max(0, currentOffset - currentLimit);
+        loadStocks(false);
+    }
+
+    function nextPage() {
+        if (!currentHasNext) {
+            return;
+        }
+        currentOffset += currentLimit;
+        loadStocks(false);
+    }
+
+    async function loadStocksLegacy(resetPage = false) {
         const controls = validateControls();
         if (!controls) {
             return;
         }
 
+        currentLimit = controls.limit;
+        if (resetPage) {
+            currentOffset = 0;
+        }
+
         const url =
-            `http://127.0.0.1:8000/stocks?valuation_weight=${controls.valuationWeight}` +
+            `http://127.0.0.1:8000/stocks?board=${controls.board}` +
+            `&valuation_weight=${controls.valuationWeight}` +
             `&quality_weight=${controls.qualityWeight}` +
             `&growth_weight=${controls.growthWeight}` +
             `&dividend_weight=${controls.dividendWeight}` +
@@ -943,7 +1049,8 @@
             `&revenue_growth_weight=${controls.revenueGrowthWeight}` +
             `&profit_growth_weight=${controls.profitGrowthWeight}` +
             `&dividend_yield_weight=${controls.dividendYieldWeight}` +
-            `&limit=${controls.limit}`;
+            `&limit=${controls.limit}` +
+            `&offset=${currentOffset}`;
 
         const tbody = document.getElementById("stockTableBody");
         const summary = document.getElementById("summary");
@@ -1011,7 +1118,114 @@
         }
     }
 
-    loadStocks();
+    async function loadStocks(resetPage = false) {
+        const controls = validateControls();
+        if (!controls) {
+            return;
+        }
+
+        currentLimit = controls.limit;
+        if (resetPage) {
+            currentOffset = 0;
+        }
+
+        const url =
+            `http://127.0.0.1:8000/stocks?board=${controls.board}` +
+            `&valuation_weight=${controls.valuationWeight}` +
+            `&quality_weight=${controls.qualityWeight}` +
+            `&growth_weight=${controls.growthWeight}` +
+            `&dividend_weight=${controls.dividendWeight}` +
+            `&pe_weight=${controls.peWeight}` +
+            `&pb_weight=${controls.pbWeight}` +
+            `&roe_weight=${controls.roeWeight}` +
+            `&revenue_growth_weight=${controls.revenueGrowthWeight}` +
+            `&profit_growth_weight=${controls.profitGrowthWeight}` +
+            `&dividend_yield_weight=${controls.dividendYieldWeight}` +
+            `&limit=${controls.limit}` +
+            `&offset=${currentOffset}`;
+
+        const tbody = document.getElementById("stockTableBody");
+        const summary = document.getElementById("summary");
+
+        tbody.innerHTML = `<tr><td colspan="15" class="loading">数据加载中...</td></tr>`;
+        summary.innerText = "数据加载中...";
+
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.code !== 1) {
+                tbody.innerHTML = `<tr><td colspan="15" class="loading">${result.message || "请求参数不正确。"}</td></tr>`;
+                summary.innerText = result.message || "请求参数不正确。";
+                currentTotal = 0;
+                currentHasNext = false;
+                updatePaginationControls();
+                return;
+            }
+
+            currentTotal = Number(result.total || 0);
+            currentLimit = Number(result.limit || controls.limit);
+            currentOffset = Number(result.offset || 0);
+            currentHasNext = Boolean(result.has_next);
+            const currentBoard = result.current_board || controls.board || "main_board";
+            const currentBoardName = boardNameMap[currentBoard] || currentBoard;
+
+            if (!result.data || result.data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="15" class="loading">暂无数据</td></tr>`;
+                summary.innerText = `当前范围：${currentBoardName}；暂无股票评分数据；总计 ${currentTotal} 只；当前第 ${Math.floor(currentOffset / currentLimit) + 1} 页。`;
+                updatePaginationControls();
+                return;
+            }
+
+            const first = result.data[0];
+            const currentPage = Math.floor(currentOffset / currentLimit) + 1;
+
+            summary.innerHTML =
+                `当前范围：<b>${currentBoardName}</b>；当前返回 <b>${result.count}</b> 只股票；总计 <b>${currentTotal}</b> 只；当前第 <b>${currentPage}</b> 页；` +
+                `估值日期：<b>${first.trade_date || "-"}</b>；` +
+                `财报期：<b>${first.report_date || "-"}</b>；` +
+                `参与因子：<b>${formatFactorNames(first.active_factors)}</b>` +
+                (first.inactive_factors
+                    ? `；暂未参与因子：<b>${formatFactorNames(first.inactive_factors)}</b>`
+                    : "");
+
+            tbody.innerHTML = "";
+
+            result.data.forEach((stock, index) => {
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td class="rank">${currentOffset + index + 1}</td>
+                    <td>${stock.bs_code}</td>
+                    <td class="stock-name">${stock.name}</td>
+                    <td class="score">${formatValue(stock.final_score)}</td>
+                    <td>${formatValue(stock.valuation_score)}</td>
+                    <td>${formatValue(stock.quality_score)}</td>
+                    <td>${formatValue(stock.growth_score)}</td>
+                    <td>${formatValue(stock.dividend_score)}</td>
+                    <td>${formatValue(stock.pe_ttm)}</td>
+                    <td>${formatValue(stock.pb)}</td>
+                    <td>${formatValue(stock.roe, "%")}</td>
+                    <td>${formatValue(stock.revenue_growth, "%")}</td>
+                    <td>${formatValue(stock.profit_growth, "%")}</td>
+                    <td>${formatValue(stock.dividend_yield, "%")}</td>
+                    <td class="risk-cell">${formatRiskTags(stock.risk_tags)}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            updatePaginationControls();
+        } catch (error) {
+            console.error(error);
+            tbody.innerHTML = `<tr><td colspan="15" class="error">请求失败，请确认 FastAPI 服务正在运行。</td></tr>`;
+            summary.innerText = "请求失败。";
+            currentHasNext = false;
+            updatePaginationControls();
+        }
+    }
+
+    loadStocks(true);
 </script>
 
 </body>

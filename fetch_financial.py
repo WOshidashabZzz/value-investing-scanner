@@ -6,6 +6,7 @@ import baostock as bs
 import pandas as pd
 
 from fetch_a_stock import bs_code_to_symbol, fetch_stock_pool
+from timeout_utils import run_with_timeout
 
 
 def safe_float(value):
@@ -258,7 +259,7 @@ def fetch_one_stock_financial(
     return None
 
 
-def fetch_stock_financial() -> pd.DataFrame:
+def fetch_stock_financial_legacy() -> pd.DataFrame:
     """读取股票池并批量获取最近一期财务数据。"""
     stock_pool = fetch_stock_pool()
     login = bs.login()
@@ -311,6 +312,85 @@ def fetch_stock_financial() -> pd.DataFrame:
     print("股票池数量：", len(stock_pool))
     print("成功获取财务数据数量：", len(df))
     print("失败/跳过数量：", failed_count)
+    return df
+
+
+def fetch_stock_financial(
+    stock_pool: pd.DataFrame | None = None,
+    limit: int | None = None,
+) -> pd.DataFrame:
+    """读取股票池并批量获取最近一期财务数据。"""
+    if stock_pool is None:
+        stock_pool = fetch_stock_pool(limit=limit)
+    elif limit is not None:
+        stock_pool = stock_pool.head(limit).copy()
+
+    login = bs.login()
+    baostock_available = login.error_code == "0"
+
+    if not baostock_available:
+        print(f"Baostock 备用财务登录失败，将只使用 AKShare：{login.error_msg}")
+
+    rows = []
+    success_count = 0
+    failed_count = 0
+    skipped_count = 0
+
+    try:
+        for _, stock in stock_pool.iterrows():
+            bs_code = str(stock.get("bs_code", "")).strip()
+            name = str(stock.get("name", "")).strip()
+
+            if not bs_code:
+                skipped_count += 1
+                print(f"财务跳过：bs_code=- name={name or '-'} 原因=缺少代码")
+                continue
+
+            try:
+                completed, value = run_with_timeout(
+                    fetch_one_stock_financial,
+                    45,
+                    bs_code,
+                    use_baostock_fallback=baostock_available,
+                )
+                if not completed:
+                    failed_count += 1
+                    print(f"财务失败：bs_code={bs_code} name={name or '-'} 原因={value}")
+                    continue
+
+                financial = value
+                if financial is None:
+                    failed_count += 1
+                    print(f"财务失败：bs_code={bs_code} name={name or '-'} 原因=无可用财务数据")
+                else:
+                    rows.append(financial)
+                    success_count += 1
+            except Exception as exc:
+                failed_count += 1
+                print(f"财务异常：bs_code={bs_code} name={name or '-'} 原因={exc}")
+
+            time.sleep(0.2)
+    finally:
+        if baostock_available:
+            bs.logout()
+
+    df = pd.DataFrame(
+        rows,
+        columns=[
+            "bs_code",
+            "report_date",
+            "roe",
+            "revenue_growth",
+            "profit_growth",
+            "dividend_yield",
+        ],
+    )
+
+    print("财务数据获取完成")
+    print("股票池数量：", len(stock_pool))
+    print("成功获取财务数据数量：", success_count)
+    print("财务失败数量：", failed_count)
+    print("财务跳过数量：", skipped_count)
     return df
 
 

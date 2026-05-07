@@ -6,7 +6,7 @@ from factor_config import CATEGORY_WEIGHTS, FACTOR_CONFIG
 from risk import calculate_risk
 
 
-def get_latest_strategy_data() -> pd.DataFrame:
+def get_latest_strategy_data(board: str | None = "main_board", market: str | None = None) -> pd.DataFrame:
     """读取最新交易日估值数据，并关联每只股票最新一期财务数据。"""
     engine = get_engine()
 
@@ -16,6 +16,7 @@ def get_latest_strategy_data() -> pd.DataFrame:
             b.symbol,
             b.name,
             b.market,
+            b.board,
             v.trade_date,
             v.close_price,
             v.pe_ttm,
@@ -41,8 +42,22 @@ def get_latest_strategy_data() -> pd.DataFrame:
             FROM stock_valuation
         )
     """)
+    filters = []
+    params = {}
 
-    return pd.read_sql(sql, engine)
+    if board and board != "all":
+        filters.append("b.board = :board")
+        params["board"] = board
+
+    if market:
+        filters.append("b.market = :market")
+        params["market"] = market
+
+    sql_text = sql.text
+    if filters:
+        sql_text = f"{sql_text}\n        AND {' AND '.join(filters)}"
+
+    return pd.read_sql(text(sql_text), engine, params=params)
 
 
 def get_latest_valuation_data() -> pd.DataFrame:
@@ -77,8 +92,13 @@ def is_factor_available(df, factor_name, min_valid_ratio=0.3) -> bool:
         return False
 
     values = pd.to_numeric(df[factor_name], errors="coerce")
-    valid_ratio = values.notna().sum() / len(df)
-    return valid_ratio >= min_valid_ratio
+    valid_count = values.notna().sum()
+    if valid_count <= 0:
+        return False
+
+    factor_min_valid_ratio = FACTOR_CONFIG.get(factor_name, {}).get("min_valid_ratio", min_valid_ratio)
+    valid_ratio = valid_count / len(df)
+    return valid_ratio >= factor_min_valid_ratio
 
 
 def _normalize_weights(weights: dict[str, float]) -> dict[str, float]:

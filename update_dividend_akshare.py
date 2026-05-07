@@ -1,4 +1,5 @@
 import re
+import time
 from typing import Any
 
 import akshare as ak
@@ -7,6 +8,7 @@ import pandas as pd
 from sqlalchemy import text
 
 from db import get_engine
+from timeout_utils import run_with_timeout
 
 
 CASH_DIVIDEND_FIELDS = [
@@ -46,7 +48,7 @@ def safe_float(value: Any) -> float | None:
         return None
 
 
-def fetch_stock_rows() -> list[dict]:
+def fetch_stock_rows(stock_pool: pd.DataFrame | None = None, limit: int | None = None) -> list[dict]:
     """读取股票基础信息、最新收盘价和最新财务报告期。"""
     engine = get_engine()
     sql = text("""
@@ -75,7 +77,17 @@ def fetch_stock_rows() -> list[dict]:
     """)
 
     with engine.connect() as conn:
-        return [dict(row._mapping) for row in conn.execute(sql)]
+        rows = [dict(row._mapping) for row in conn.execute(sql)]
+
+    if stock_pool is not None:
+        if limit is not None:
+            stock_pool = stock_pool.head(limit).copy()
+        allowed_codes = set(stock_pool["bs_code"].astype(str).str.strip())
+        rows = [row for row in rows if str(row.get("bs_code", "")).strip() in allowed_codes]
+    elif limit is not None:
+        rows = rows[:limit]
+
+    return rows
 
 
 def get_latest_dividend_row(symbol: str) -> pd.Series | None:
@@ -241,9 +253,9 @@ def update_dividend_yield(stock_id: int, report_date, dividend_yield: float) -> 
         )
 
 
-def main():
+def main(stock_pool: pd.DataFrame | None = None, limit: int | None = None):
     """使用 AKShare 优先、Baostock 备用来更新 dividend_yield。"""
-    stocks = fetch_stock_rows()
+    stocks = fetch_stock_rows(stock_pool=stock_pool, limit=limit)
     total_count = len(stocks)
     fetched_count = 0
     akshare_count = 0
@@ -276,7 +288,19 @@ def main():
                     print(f"{bs_code} {name} 跳过：close_price 缺失或无效")
                     continue
 
-                cash_per_share, source = get_cash_dividend_per_share(bs_code, close_price, report_date)
+                completed, value = run_with_timeout(
+                    get_cash_dividend_per_share,
+                    30,
+                    bs_code,
+                    close_price,
+                    report_date,
+                )
+                if not completed:
+                    failed_count += 1
+                    print(f"{bs_code} {name} 股息率更新失败：{value}")
+                    continue
+
+                cash_per_share, source = value
                 if cash_per_share is None:
                     skipped_count += 1
                     print(f"{bs_code} {name} 跳过：{source}")
@@ -300,6 +324,7 @@ def main():
             except Exception as exc:
                 failed_count += 1
                 print(f"{bs_code} {name} 更新失败：{exc}")
+            time.sleep(0.2)
     finally:
         if login.error_code == "0":
             bs.logout()

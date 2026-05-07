@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def _safe_float(value):
-    """将空值和异常值安全转换为 float。"""
+    """Convert empty and abnormal values to None."""
     if value is None or pd.isna(value):
         return None
 
@@ -18,7 +18,7 @@ def _safe_float(value):
 
 
 def calculate_risk(row) -> tuple[str, float]:
-    """根据估值、质量、成长和分红指标生成风险标签与扣分。"""
+    """Generate risk tags without penalizing missing factor values."""
     pe_ttm = _safe_float(row.get("pe_ttm"))
     pb = _safe_float(row.get("pb"))
     roe = _safe_float(row.get("roe"))
@@ -52,9 +52,16 @@ def calculate_risk(row) -> tuple[str, float]:
         tags.append("可能价值陷阱")
         penalty += 15
 
-    if roe is not None and roe < 5:
-        tags.append("ROE偏低")
-        penalty += 10
+    if roe is not None:
+        if roe < 0:
+            tags.append("ROE为负")
+            penalty += 15
+        elif roe < 3:
+            tags.append("ROE明显偏低")
+            penalty += 10
+        elif roe < 6:
+            tags.append("ROE偏低")
+            penalty += 5
 
     if profit_growth is not None and profit_growth < 0:
         tags.append("利润下滑")

@@ -10,11 +10,13 @@ CREATE TABLE IF NOT EXISTS stock_basic (
     symbol VARCHAR(20) NOT NULL COMMENT '股票代码，例如600519',
     name VARCHAR(100) COMMENT '股票名称',
     market VARCHAR(20) COMMENT '市场，例如sh或sz',
+    board VARCHAR(30) COMMENT '股票板块：main_board/gem/star/bse/unknown',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     UNIQUE KEY uk_bs_code (bs_code),
-    INDEX idx_symbol (symbol)
+    INDEX idx_symbol (symbol),
+    INDEX idx_board (board)
 ) COMMENT='股票基础信息表';
 
 CREATE TABLE IF NOT EXISTS stock_valuation (
