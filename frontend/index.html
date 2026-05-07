@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票筛选系统</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .controls { margin-bottom: 20px; }
+        .controls label { margin-right: 10px; }
+        .controls input, .controls select { margin-right: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .error { color: red; }
+        .loading { color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>股票筛选系统</h1>
+        <div class="controls">
+            <label>估值权重: <input type="number" id="valuation_weight" value="35" min="0" max="100"></label>
+            <label>质量权重: <input type="number" id="quality_weight" value="30" min="0" max="100"></label>
+            <label>成长权重: <input type="number" id="growth_weight" value="25" min="0" max="100"></label>
+            <label>分红权重: <input type="number" id="dividend_weight" value="10" min="0" max="100"></label>
+            <label>板块:
+                <select id="board">
+                    <option value="">全部</option>
+                    <option value="main_board">主板</option>
+                    <option value="gem">创业板</option>
+                    <option value="star">科创板</option>
+                    <option value="bse">北交所</option>
+                </select>
+            </label>
+            <label>市场:
+                <select id="market">
+                    <option value="">全部</option>
+                    <option value="sh">上海</option>
+                    <option value="sz">深圳</option>
+                    <option value="bj">北京</option>
+                </select>
+            </label>
+            <label>返回数量: <input type="number" id="limit" value="50" min="1" max="500"></label>
+            <button onclick="fetchStocks()">查询</button>
+        </div>
+        <div id="loading" class="loading" style="display:none;">加载中...</div>
+        <div id="error" class="error"></div>
+        <table id="stockTable">
+            <thead>
+                <tr>
+                    <th>代码</th>
+                    <th>名称</th>
+                    <th>PE_TTM</th>
+                    <th>PB</th>
+                    <th>ROE</th>
+                    <th>营收增长率</th>
+                    <th>利润增长率</th>
+                    <th>股息率</th>
+                    <th>综合评分</th>
+                </tr>
+            </thead>
+            <tbody id="stockBody"></tbody>
+        </table>
+    </div>
+    <script>
+        async function fetchStocks() {
+            const valuation_weight = document.getElementById('valuation_weight').value;
+            const quality_weight = document.getElementById('quality_weight').value;
+            const growth_weight = document.getElementById('growth_weight').value;
+            const dividend_weight = document.getElementById('dividend_weight').value;
+            const board = document.getElementById('board').value;
+            const market = document.getElementById('market').value;
+            const limit = document.getElementById('limit').value;
+
+            const params = new URLSearchParams({
+                valuation_weight,
+                quality_weight,
+                growth_weight,
+                dividend_weight,
+                limit,
+                offset: 0
+            });
+            if (board) params.append('board', board);
+            if (market) params.append('market', market);
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').textContent = '';
+            document.getElementById('stockBody').innerHTML = '';
+
+            try {
+                const response = await fetch(`/stocks?${params}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                const tbody = document.getElementById('stockBody');
+                data.forEach(stock => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${stock.symbol || ''}</td>
+                        <td>${stock.name || ''}</td>
+                        <td>${stock.pe_ttm != null ? stock.pe_ttm.toFixed(2) : '-'}</td>
+                        <td>${stock.pb != null ? stock.pb.toFixed(2) : '-'}</td>
+                        <td>${stock.roe != null ? stock.roe.toFixed(2) + '%' : '-'}</td>
+                        <td>${stock.revenue_growth != null ? stock.revenue_growth.toFixed(2) + '%' : '-'}</td>
+                        <td>${stock.profit_growth != null ? stock.profit_growth.toFixed(2) + '%' : '-'}</td>
+                        <td>${stock.dividend_yield != null ? stock.dividend_yield.toFixed(2) + '%' : '-'}</td>
+                        <td>${stock.total_score != null ? stock.total_score.toFixed(2) : '-'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                document.getElementById('error').textContent = `查询失败: ${err.message}`;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // 页面加载时自动查询
+        window.onload = fetchStocks;
+    </script>
+</body>
+</html>
