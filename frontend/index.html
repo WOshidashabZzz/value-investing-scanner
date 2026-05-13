@@ -3,123 +3,415 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>股票筛选系统</title>
+    <title>多因子股票研究工具 — 价值评分系统</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #333; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .controls { margin-bottom: 20px; }
-        .controls label { margin-right: 10px; }
-        .controls input, .controls select { margin-right: 20px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .error { color: red; }
-        .loading { color: #888; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: #60a5fa; text-decoration: none; }
+        a:hover { color: #93bbfd; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ===== Hero ===== */
+        .hero {
+            min-height: 56vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            padding: 64px 24px 48px;
+            position: relative;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #334155, transparent);
+        }
+        .hero-content {
+            max-width: 720px;
+        }
+        .hero h1 {
+            font-size: 40px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            margin-bottom: 18px;
+            color: #f1f5f9;
+        }
+        .hero .subtitle {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 28px;
+            line-height: 1.8;
+            max-width: 580px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero .quote {
+            font-size: 14px;
+            color: #475569;
+            font-style: italic;
+            border-top: 1px solid #1e293b;
+            padding: 16px 0 0;
+            display: inline-block;
+            opacity: 0.7;
+        }
+        .hero .quote-author {
+            display: inline;
+            margin-top: 0;
+            font-size: 13px;
+            color: #334155;
+            font-style: normal;
+        }
+
+        /* ===== Section ===== */
+        .section {
+            padding: 72px 0;
+        }
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #f1f5f9;
+        }
+        .section-desc {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 16px;
+            max-width: 640px;
+            margin: 0 auto 48px;
+            line-height: 1.7;
+        }
+
+        /* ===== Features ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .feature-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 32px 28px;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .feature-card:hover {
+            background: #263548;
+            border-color: #475569;
+        }
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #e2e8f0;
+        }
+        .feature-card p {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.7;
+        }
+
+        /* ===== Market Cards ===== */
+        .market-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+        .market-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 40px 36px;
+            text-align: center;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .market-card:hover {
+            transform: translateY(-4px);
+            border-color: #3b82f6;
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.1);
+        }
+        .market-flag {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .market-card h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #f1f5f9;
+        }
+        .market-card .market-sub {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        .market-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+        .market-tag {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 999px;
+            background: #263548;
+            color: #94a3b8;
+            font-size: 13px;
+            border: 1px solid #334155;
+        }
+        .btn-market {
+            display: inline-block;
+            padding: 14px 40px;
+            border-radius: 12px;
+            background: #3b82f6;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.15s ease;
+            text-decoration: none;
+        }
+        .btn-market:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            color: #fff;
+        }
+
+        /* ===== Disclaimer ===== */
+        .disclaimer {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 36px 32px;
+            text-align: center;
+        }
+        .disclaimer h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+        .disclaimer p {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.8;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            border-top: 1px solid #1e293b;
+            padding: 40px 0;
+            text-align: center;
+        }
+        .footer p {
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.8;
+        }
+        .footer .tech-stack {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #334155;
+        }
+        .footer .tech-stack span {
+            display: inline-block;
+            padding: 2px 10px;
+            border: 1px solid #1e293b;
+            border-radius: 999px;
+            margin: 4px;
+            font-size: 12px;
+        }
+        .footer .copyright {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #334155;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .hero { min-height: auto; padding: 48px 20px 40px; }
+            .hero h1 { font-size: 26px; letter-spacing: 1.5px; }
+            .hero .subtitle { font-size: 15px; }
+            .hero .quote { font-size: 13px; }
+
+            .section { padding: 48px 0; }
+            .section-title { font-size: 24px; }
+            .section-desc { font-size: 15px; margin-bottom: 32px; }
+
+            .features-grid { grid-template-columns: 1fr; gap: 16px; }
+            .feature-card { padding: 24px 20px; }
+
+            .market-grid { grid-template-columns: 1fr; gap: 20px; }
+            .market-card { padding: 32px 24px; }
+            .market-card h2 { font-size: 22px; }
+
+            .container { padding: 0 16px; }
+            .disclaimer { padding: 28px 20px; }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .hero h1 { font-size: 34px; }
+            .features-grid { gap: 20px; }
+            .market-grid { gap: 24px; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>股票筛选系统</h1>
-        <div class="controls">
-            <label>估值权重: <input type="number" id="valuation_weight" value="35" min="0" max="100"></label>
-            <label>质量权重: <input type="number" id="quality_weight" value="30" min="0" max="100"></label>
-            <label>成长权重: <input type="number" id="growth_weight" value="25" min="0" max="100"></label>
-            <label>分红权重: <input type="number" id="dividend_weight" value="10" min="0" max="100"></label>
-            <label>板块:
-                <select id="board">
-                    <option value="">全部</option>
-                    <option value="main_board">主板</option>
-                    <option value="gem">创业板</option>
-                    <option value="star">科创板</option>
-                    <option value="bse">北交所</option>
-                </select>
-            </label>
-            <label>市场:
-                <select id="market">
-                    <option value="">全部</option>
-                    <option value="sh">上海</option>
-                    <option value="sz">深圳</option>
-                    <option value="bj">北京</option>
-                </select>
-            </label>
-            <label>返回数量: <input type="number" id="limit" value="50" min="1" max="500"></label>
-            <button onclick="fetchStocks()">查询</button>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>多因子股票研究工具</h1>
+        <p class="subtitle">基于估值、质量、成长与分红因子的 A 股与美股筛选平台</p>
+        <div class="quote">
+            &ldquo;价格是你付出的，价值才是你得到的。&rdquo;
+            <span class="quote-author">&nbsp;— 本杰明·格雷厄姆</span>
         </div>
-        <div id="loading" class="loading" style="display:none;">加载中...</div>
-        <div id="error" class="error"></div>
-        <table id="stockTable">
-            <thead>
-                <tr>
-                    <th>代码</th>
-                    <th>名称</th>
-                    <th>PE_TTM</th>
-                    <th>PB</th>
-                    <th>ROE</th>
-                    <th>营收增长率</th>
-                    <th>利润增长率</th>
-                    <th>股息率</th>
-                    <th>综合评分</th>
-                </tr>
-            </thead>
-            <tbody id="stockBody"></tbody>
-        </table>
     </div>
-    <script>
-        async function fetchStocks() {
-            const valuation_weight = document.getElementById('valuation_weight').value;
-            const quality_weight = document.getElementById('quality_weight').value;
-            const growth_weight = document.getElementById('growth_weight').value;
-            const dividend_weight = document.getElementById('dividend_weight').value;
-            const board = document.getElementById('board').value;
-            const market = document.getElementById('market').value;
-            const limit = document.getElementById('limit').value;
+</section>
 
-            const params = new URLSearchParams({
-                valuation_weight,
-                quality_weight,
-                growth_weight,
-                dividend_weight,
-                limit,
-                offset: 0
-            });
-            if (board) params.append('board', board);
-            if (market) params.append('market', market);
+<!-- ===== 网站介绍 ===== -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">关于这个工具</h2>
+        <p class="section-desc">
+            一个个人维护的量化研究项目，通过多因子评分体系辅助长期价值投资研究。
+        </p>
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">📊</span>
+                <h3>多因子评分体系</h3>
+                <p>
+                    综合 PE、PB、ROE、营收增长率、净利润增长率、股息率等多个维度，
+                    对股票进行客观评分，帮助发现潜在的投资研究标的。
+                </p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🌏</span>
+                <h3>双市场覆盖</h3>
+                <p>
+                    同时支持 A 股（沪深主板）与美股（S&P 500）市场，
+                    覆盖两大核心股票市场的价值分析需求。
+                </p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔄</span>
+                <h3>数据自动更新</h3>
+                <p>
+                    每日自动采集最新的估值、财务和分红数据，确保分析基于尽可能新的市场信息。
+                    数据来源包括 AKShare、yfinance 等。
+                </p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📝</span>
+                <h3>研究辅助工具</h3>
+                <p>
+                    所有评分结果仅作为初步筛选和研究参考，帮助缩小研究范围。
+                    不构成任何买入或卖出建议，投资决策需自行判断。
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('error').textContent = '';
-            document.getElementById('stockBody').innerHTML = '';
+<!-- ===== 市场选择 ===== -->
+<section class="section" style="padding-top: 0;">
+    <div class="container">
+        <h2 class="section-title">选择市场</h2>
+        <p class="section-desc">
+            选择你想要分析的市场，开始多因子价值评分研究。
+        </p>
+        <div class="market-grid">
+            <!-- A 股 -->
+            <div class="market-card">
+                <div class="market-flag">🇨🇳</div>
+                <h2>A 股市场</h2>
+                <p class="market-sub">沪深 A 股 · 多因子价值评分</p>
+                <div class="market-tags">
+                    <span class="market-tag">沪深主板</span>
+                    <span class="market-tag">多因子评分</span>
+                    <span class="market-tag">行业筛选</span>
+                    <span class="market-tag">风险标签</span>
+                </div>
+                <a href="/cn.html" class="btn-market">进入 A 股市场 →</a>
+            </div>
+            <!-- 美股 -->
+            <div class="market-card">
+                <div class="market-flag">🇺🇸</div>
+                <h2>美股市场</h2>
+                <p class="market-sub">S&P 500 · 美股价值分析</p>
+                <div class="market-tags">
+                    <span class="market-tag">S&P 500</span>
+                    <span class="market-tag">价值评分</span>
+                    <span class="market-tag">行业板块</span>
+                    <span class="market-tag">长期参考</span>
+                </div>
+                <a href="/us.html" class="btn-market">进入美股市场 →</a>
+            </div>
+        </div>
+    </div>
+</section>
 
-            try {
-                const response = await fetch(`/stocks?${params}`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                const tbody = document.getElementById('stockBody');
-                data.forEach(stock => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${stock.symbol || ''}</td>
-                        <td>${stock.name || ''}</td>
-                        <td>${stock.pe_ttm != null ? stock.pe_ttm.toFixed(2) : '-'}</td>
-                        <td>${stock.pb != null ? stock.pb.toFixed(2) : '-'}</td>
-                        <td>${stock.roe != null ? stock.roe.toFixed(2) + '%' : '-'}</td>
-                        <td>${stock.revenue_growth != null ? stock.revenue_growth.toFixed(2) + '%' : '-'}</td>
-                        <td>${stock.profit_growth != null ? stock.profit_growth.toFixed(2) + '%' : '-'}</td>
-                        <td>${stock.dividend_yield != null ? stock.dividend_yield.toFixed(2) + '%' : '-'}</td>
-                        <td>${stock.total_score != null ? stock.total_score.toFixed(2) : '-'}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (err) {
-                document.getElementById('error').textContent = `查询失败: ${err.message}`;
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        }
+<!-- ===== 免责声明 ===== -->
+<section class="section" style="padding-top: 0;">
+    <div class="container">
+        <div class="disclaimer">
+            <h3>⚠️ 风险免责声明</h3>
+            <p>
+                本网站所有内容仅供个人学习与研究参考，不构成任何投资建议，也不构成对任何证券的推荐或要约。
+                数据来源于公开渠道，可能存在延迟、不完整或误差，不保证数据的准确性和及时性。
+                投资有风险，入市需谨慎。过往评分表现不代表未来结果。所有投资决策应由您自行判断并承担相应风险。
+            </p>
+        </div>
+    </div>
+</section>
 
-        // 页面加载时自动查询
-        window.onload = fetchStocks;
-    </script>
+<!-- ===== Footer ===== -->
+<footer class="footer">
+    <div class="container">
+        <p>
+            数据来源：AKShare · yfinance · baostock
+        </p>
+        <div class="tech-stack">
+            <span>FastAPI</span>
+            <span>Python</span>
+            <span>MySQL</span>
+            <span>Nginx</span>
+        </div>
+        <p class="copyright">
+            多因子价值评分系统 &copy; 2026 &middot; 个人项目
+        </p>
+    </div>
+</footer>
+
 </body>
 </html>

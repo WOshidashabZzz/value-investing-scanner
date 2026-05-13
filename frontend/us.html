@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S&P 500 多因子研究系统</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #0b1220;
+            color: #cbd5e1;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .container {
+            width: 94%;
+            max-width: 1550px;
+            margin: 0 auto;
+            padding: 24px 0 48px;
+        }
+        .hero {
+            background: linear-gradient(135deg, #111827 0%, #0f172a 100%);
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+            padding: 28px 32px;
+            margin-bottom: 18px;
+        }
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        .hero-left { flex: 1; }
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f1f5f9;
+            letter-spacing: 0.3px;
+            margin-bottom: 8px;
+        }
+        h1 .accent { color: #38bdf8; }
+        .subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .subtitle small { color: #64748b; font-size: 12px; }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            color: #38bdf8;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .nav-links { display: flex; gap: 10px; align-items: center; }
+        .nav-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 5px 12px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .nav-links a:hover {
+            color: #e2e8f0;
+            border-color: #334155;
+            background: rgba(255,255,255,0.03);
+        }
+        .nav-links a.active {
+            color: #38bdf8;
+            border-color: rgba(56,189,248,0.25);
+            background: rgba(56,189,248,0.06);
+        }
+        .market-overview {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .market-card {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 16px 18px;
+            transition: border-color 0.15s ease;
+        }
+        .market-card:hover { border-color: #334155; }
+        .market-card .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 6px;
+        }
+        .market-card .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #f1f5f9;
+            font-variant-numeric: tabular-nums;
+        }
+        .market-card .change {
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+        .change.positive { color: #22c55e; }
+        .change.negative { color: #ef4444; }
+        .market-card .sub { font-size: 11px; color: #475569; margin-top: 4px; }
+        .status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            padding: 12px 20px;
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #64748b;
+            align-items: center;
+        }
+        .status-bar .dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #22c55e;
+            margin-right: 6px;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .status-bar strong { color: #e2e8f0; font-weight: 600; }
+        .status-bar .tag-update {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .controls {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+        }
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .controls-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        .controls-title .light { font-weight: 400; color: #64748b; font-size: 13px; }
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 18px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .control-row:last-child { margin-bottom: 0; }
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #94a3b8;
+            font-size: 13px;
+            min-height: 34px;
+            white-space: nowrap;
+        }
+        .control-item label { color: #64748b; font-weight: 500; }
+        .strategy-section { margin-bottom: 14px; }
+        .strategy-select-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .strategy-btn {
+            padding: 7px 18px;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        .strategy-btn:hover {
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        .strategy-btn.active {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+        }
+        .strategy-desc { font-size: 12px; color: #475569; margin-top: 6px; }
+        .advanced-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        .advanced-toggle:hover {
+            border-color: #334155;
+            color: #94a3b8;
+        }
+        .advanced-toggle .arrow {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+        .advanced-toggle.open .arrow { transform: rotate(180deg); }
+        .advanced-panel {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.35s ease, opacity 0.3s ease, margin 0.3s ease;
+            margin-top: 0;
+        }
+        .advanced-panel.open {
+            max-height: 300px;
+            opacity: 1;
+            margin-top: 14px;
+        }
+        .weight-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 24px;
+            padding: 14px 16px;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+        }
+        .weight-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .weight-item label { min-width: 70px; color: #64748b; }
+        .weight-item input[type="range"] {
+            width: 120px;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #1e293b;
+            border-radius: 2px;
+            outline: none;
+        }
+        .weight-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            border: 2px solid #0b1220;
+        }
+        .weight-item input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            border: 2px solid #0b1220;
+        }
+        .weight-item .weight-val {
+            min-width: 30px;
+            text-align: right;
+            font-weight: 600;
+            color: #e2e8f0;
+            font-variant-numeric: tabular-nums;
+        }
+        select {
+            padding: 7px 10px;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            min-width: 130px;
+        }
+        select:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.1);
+        }
+        select option { background: #0f172a; color: #e2e8f0; }
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.15s ease;
+        }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+        }
+        .btn-secondary:hover {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .sector-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .sector-btn {
+            padding: 5px 14px;
+            border: 1px solid #1e293b;
+            border-radius: 999px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.15s ease;
+            color: #64748b;
+        }
+        .sector-btn:hover {
+            border-color: #475569;
+            color: #94a3b8;
+        }
+        .sector-btn.active {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+        }
+        .stats-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 24px;
+            padding: 12px 20px;
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .stats-bar strong { color: #e2e8f0; font-weight: 600; }
+        .table-wrap {
+            overflow-x: auto;
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: #0f172a;
+            color: #64748b;
+            font-weight: 600;
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #1e293b;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        th:hover { color: #94a3b8; }
+        th .sort-icon { margin-left: 3px; opacity: 0.3; font-size: 10px; }
+        th.sorted .sort-icon { opacity: 1; color: #38bdf8; }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #1a2332;
+            white-space: nowrap;
+            color: #cbd5e1;
+        }
+        tr:hover td { background: rgba(56, 189, 248, 0.03); }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #1e293b;
+            color: #64748b;
+        }
+        .rank-badge.top1 {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #1c1917;
+        }
+        .rank-badge.top3 {
+            background: linear-gradient(135deg, #38bdf8, #2563eb);
+            color: #0f172a;
+        }
+        .rank-badge.top5 {
+            background: rgba(56, 189, 248, 0.12);
+            color: #38bdf8;
+        }
+        .rank-badge.top10 {
+            background: rgba(56, 189, 248, 0.06);
+            color: #7dd3fc;
+        }
+        .stock-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stock-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #1e293b;
+            color: #64748b;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+        .stock-avatar.has-logo { background: transparent; }
+        .stock-avatar img {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            object-fit: contain;
+        }
+        .stock-name { display: flex; flex-direction: column; }
+        .stock-name .code { font-weight: 600; color: #e2e8f0; font-size: 13px; }
+        .stock-name .name { font-size: 11px; color: #64748b; }
+        .score-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .score-bar {
+            width: 60px;
+            height: 4px;
+            background: #1e293b;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        .score-bar-fill.high { background: #22c55e; }
+        .score-bar-fill.mid { background: #f59e0b; }
+        .score-bar-fill.low { background: #ef4444; }
+        .score-val {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            min-width: 36px;
+            text-align: right;
+        }
+        .score-val.high { color: #22c55e; }
+        .score-val.mid { color: #f59e0b; }
+        .score-val.low { color: #ef4444; }
+        .tag {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .tag-sector {
+            background: rgba(56, 189, 248, 0.08);
+            color: #7dd3fc;
+            border: 1px solid rgba(56, 189, 248, 0.12);
+        }
+        .tag-risk {
+            margin: 1px 2px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+        .tag-risk.overvalued {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+        .tag-risk.high-vol {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fcd34d;
+            border: 1px solid rgba(245, 158, 11, 0.15);
+        }
+        .tag-risk.high-growth {
+            background: rgba(34, 197, 94, 0.1);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.15);
+        }
+        .tag-risk.low-div {
+            background: rgba(99, 102, 241, 0.1);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+        }
+        .tag-risk.stable-cf {
+            background: rgba(56, 189, 248, 0.1);
+            color: #7dd3fc;
+            border: 1px solid rgba(56, 189, 248, 0.15);
+        }
+        .tag-risk.mega-tech {
+            background: rgba(168, 85, 247, 0.1);
+            color: #d8b4fe;
+            border: 1px solid rgba(168, 85, 247, 0.15);
+        }
+        .tag-na { color: #475569; font-size: 12px; }
+        tr.top10 td { background: rgba(56, 189, 248, 0.02); }
+        tr.top10:hover td { background: rgba(56, 189, 248, 0.05); }
+        tr.top3 td { background: rgba(56, 189, 248, 0.04); }
+        tr.top3:hover td { background: rgba(56, 189, 248, 0.07); }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-top: 1px solid #1e293b;
+        }
+        .pagination .page-info { color: #64748b; font-size: 13px; }
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .loading .spinner {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            border: 2px solid #1e293b;
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-msg {
+            text-align: center;
+            padding: 40px 20px;
+            color: #fca5a5;
+        }
+        .empty-msg {
+            text-align: center;
+            padding: 40px 20px;
+            color: #475569;
+        }
+        @media (max-width: 1024px) {
+            .market-overview { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .container { width: 96%; padding: 14px 0 32px; }
+            h1 { font-size: 22px; }
+            .hero { padding: 20px 18px; }
+            .hero-top { flex-direction: column; }
+            .hero-right { align-items: flex-start; width: 100%; }
+            .hero-right .nav-links { width: 100%; justify-content: flex-start; }
+            .market-overview { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .market-card { padding: 12px 14px; }
+            .market-card .value { font-size: 18px; }
+            .controls { padding: 16px; }
+            .control-row { flex-direction: column; align-items: stretch; }
+            .control-item { white-space: normal; }
+            .strategy-select-row { flex-wrap: wrap; }
+            .sector-btns { justify-content: flex-start; }
+            .weight-grid { flex-direction: column; }
+            .weight-item input[type="range"] { width: 100%; }
+            .status-bar { font-size: 12px; gap: 8px 16px; }
+            .stats-bar { font-size: 12px; gap: 8px 16px; }
+            th, td { font-size: 11px; padding: 8px 6px; }
+            .score-bar { width: 40px; }
+            .stock-avatar { width: 24px; height: 24px; font-size: 10px; }
+            .stock-avatar img { width: 24px; height: 24px; }
+            .stock-name .code { font-size: 12px; }
+            .stock-name .name { font-size: 10px; }
+            .rank-badge { width: 22px; height: 22px; font-size: 10px; }
+            .table-wrap { border-radius: 8px; -webkit-overflow-scrolling: touch; }
+            table { min-width: 700px; }
+        }
+        @media (max-width: 480px) {
+            .market-overview { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .market-card { padding: 10px 12px; }
+            .market-card .value { font-size: 16px; }
+            h1 { font-size: 19px; }
+            .hero { padding: 16px 14px; }
+            .controls { padding: 12px 14px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-top">
+            <div class="hero-left">
+                <h1>S&P 500 <span class="accent">多因子研究系统</span></h1>
+                <div class="subtitle">
+                    基于估值、盈利质量、成长性与股东回报的长期研究工具
+                    <br>
+                    <small>数据来源：yfinance · 数据延迟约 15 分钟 · 仅供研究参考，不构成投资建议</small>
+                </div>
+            </div>
+            <div class="hero-right">
+                <span class="hero-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    S&P 500
+                </span>
+                <div class="nav-links">
+                    <a href="/">🇨🇳 A股</a>
+                    <a href="/us.html" class="active">🇺🇸 美股</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Overview -->
+    <div class="market-overview" id="marketOverview">
+        <div class="market-card">
+            <div class="label">S&P 500</div>
+            <div class="value" id="mktSP500">5,180.42</div>
+            <div class="change positive" id="mktSP500Chg">+0.82%</div>
+            <div class="sub">实时指数</div>
+        </div>
+        <div class="market-card">
+            <div class="label">NASDAQ</div>
+            <div class="value" id="mktNASDAQ">16,302.76</div>
+            <div class="change positive" id="mktNASDAQChg">+1.15%</div>
+            <div class="sub">实时指数</div>
+        </div>
+        <div class="market-card">
+            <div class="label">US 10Y</div>
+            <div class="value" id="mktUS10Y">4.38</div>
+            <div class="change negative" id="mktUS10YChg">-2.3bp</div>
+            <div class="sub">国债收益率</div>
+        </div>
+        <div class="market-card">
+            <div class="label">VIX</div>
+            <div class="value" id="mktVIX">14.27</div>
+            <div class="change negative" id="mktVIXChg">-3.45%</div>
+            <div class="sub">波动率指数</div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span><span class="dot"></span>当前市场：<strong>美股 (S&P 500)</strong></span>
+        <span>股票数量：<strong id="totalCount">-</strong></span>
+        <span>数据日期：<strong id="valuationDate">-</strong></span>
+        <span class="tag-update">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            每日自动更新
+        </span>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <div class="strategy-section">
+            <div class="controls-header">
+                <div class="controls-title">策略配置 <span class="light">— 选择研究框架</span></div>
+                <button class="advanced-toggle" id="advancedToggle" onclick="toggleAdvanced()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    高级设置
+                    <span class="arrow">▼</span>
+                </button>
+            </div>
+            <div class="strategy-select-row" id="strategyBtns">
+                <button class="strategy-btn active" data-strategy="balanced" onclick="selectStrategy('balanced')">平衡型</button>
+                <button class="strategy-btn" data-strategy="quality_growth" onclick="selectStrategy('quality_growth')">质量成长</button>
+                <button class="strategy-btn" data-strategy="value" onclick="selectStrategy('value')">价值型</button>
+                <button class="strategy-btn" data-strategy="shareholder" onclick="selectStrategy('shareholder')">股东回报</button>
+            </div>
+            <div class="strategy-desc" id="strategyDesc">均衡配置：质量 25% · 成长 25% · 估值 25% · 股东回报 25%</div>
+        </div>
+
+        <!-- Advanced Panel -->
+        <div class="advanced-panel" id="advancedPanel">
+            <div class="weight-grid">
+                <div class="weight-item">
+                    <label>盈利质量</label>
+                    <input type="range" id="wQuality" min="0" max="100" value="40" oninput="updateWeightDisplay()">
+                    <span class="weight-val" id="wQualityVal">40</span>
+                </div>
+                <div class="weight-item">
+                    <label>成长性</label>
+                    <input type="range" id="wGrowth" min="0" max="100" value="35" oninput="updateWeightDisplay()">
+                    <span class="weight-val" id="wGrowthVal">35</span>
+                </div>
+                <div class="weight-item">
+                    <label>估值</label>
+                    <input type="range" id="wValue" min="0" max="100" value="15" oninput="updateWeightDisplay()">
+                    <span class="weight-val" id="wValueVal">15</span>
+                </div>
+                <div class="weight-item">
+                    <label>股东回报</label>
+                    <input type="range" id="wShareholder" min="0" max="100" value="10" oninput="updateWeightDisplay()">
+                    <span class="weight-val" id="wShareholderVal">10</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Row -->
+        <div class="control-row">
+            <div class="control-item">
+                <label>行业板块：</label>
+            </div>
+            <div class="sector-btns" id="sectorBtns">
+                <button class="sector-btn active" data-sector="">全部</button>
+            </div>
+        </div>
+        <div class="control-row">
+            <div class="control-item">
+                <label>每页显示：</label>
+                <select id="pageSize">
+                    <option value="20">20</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+            </div>
+            <div class="control-item">
+                <label>排序：</label>
+                <select id="sortBy">
+                    <option value="rank">综合评分</option>
+                    <option value="pe">市盈率(PE)</option>
+                    <option value="pb">市净率(PB)</option>
+                    <option value="roe">ROE</option>
+                    <option value="revenue_growth">营收增长率</option>
+                    <option value="profit_growth">利润增长率</option>
+                    <option value="dividend_yield">股息率</option>
+                </select>
+            </div>
+            <div class="control-item">
+                <label>排序方向：</label>
+                <select id="sortOrder">
+                    <option value="asc">升序 ↑</option>
+                    <option value="desc" selected>降序 ↓</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="loadData()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                刷新数据
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="statsBar">
+        <span>总股票数：<strong id="totalCount">-</strong></span>
+        <span>当前显示：<strong id="displayCount">-</strong></span>
+        <span>数据日期：<strong id="valuationDate">-</strong></span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+        <div id="loadingIndicator" class="loading">
+            <div class="spinner"></div>
+            <div>正在加载美股数据...</div>
+        </div>
+        <div id="errorIndicator" class="error-msg" style="display:none;"></div>
+        <div id="tableContainer" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width:44px;">#</th>
+                        <th>代码</th>
+                        <th>名称</th>
+                        <th>行业</th>
+                        <th class="text-right">PE</th>
+                        <th class="text-right">PB</th>
+                        <th class="text-right">ROE(%)</th>
+                        <th class="text-right">营收增长(%)</th>
+                        <th class="text-right">利润增长(%)</th>
+                        <th class="text-right">股息率(%)</th>
+                        <th class="text-right">6月动量(%)</th>
+                        <th class="text-right">1年动量(%)</th>
+                        <th class="text-right">波动率(%)</th>
+                        <th class="text-right">最大回撤(%)</th>
+                        <th class="text-right">综合评分</th>
+                        <th>标签</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <div class="pagination" id="pagination">
+                <button class="btn btn-secondary btn-sm" id="prevBtn" onclick="prevPage()">← 上一页</button>
+                <span class="page-info" id="pageInfo">第 1 页，共 1 页</span>
+                <button class="btn btn-secondary btn-sm" id="nextBtn" onclick="nextPage()">下一页 →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== State =====
+let allData = [];
+let currentPage = 0;
+let pageSize = 50;
+let currentSector = '';
+let sortBy = 'rank';
+let sortOrder = 'desc';
+let currentStrategy = 'balanced';
+
+// Strategy presets
+const STRATEGIES = {
+    balanced:      { quality: 25, growth: 25, value: 25, shareholder: 25, desc: '均衡配置：质量 25% · 成长 25% · 估值 25% · 股东回报 25%' },
+    quality_growth:{ quality: 40, growth: 35, value: 15, shareholder: 10, desc: '偏重质量成长：质量 40% · 成长 35% · 估值 15% · 股东回报 10%' },
+    value:         { quality: 15, growth: 15, value: 50, shareholder: 20, desc: '偏重估值：质量 15% · 成长 15% · 估值 50% · 股东回报 20%' },
+    shareholder:   { quality: 20, growth: 15, value: 25, shareholder: 40, desc: '偏重股东回报：质量 20% · 成长 15% · 估值 25% · 股东回报 40%' }
+};
+
+// Popular stocks with logo URLs
+const STOCK_LOGOS = {
+    'AAPL': 'https://logo.clearbit.com/apple.com',
+    'MSFT': 'https://logo.clearbit.com/microsoft.com',
+    'NVDA': 'https://logo.clearbit.com/nvidia.com',
+    'AMZN': 'https://logo.clearbit.com/amazon.com',
+    'GOOGL': 'https://logo.clearbit.com/google.com',
+    'META': 'https://logo.clearbit.com/meta.com',
+    'TSLA': 'https://logo.clearbit.com/tesla.com',
+    'BRK.B': null,
+    'JPM': 'https://logo.clearbit.com/jpmorgan.com',
+    'V': 'https://logo.clearbit.com/visa.com'
+};
+
+// US-style sectors
+const SECTORS = ['科技', '金融', '消费', '医药', '工业', '能源', '公用事业', '通信', '材料', '其他'];
+
+// ===== Utility =====
+function fmt(val, decimals = 2) {
+    if (val === null || val === undefined || val === '') return '<span class="tag-na">暂无数据</span>';
+    const num = Number(val);
+    if (isNaN(num)) return '<span class="tag-na">暂无数据</span>';
+    return num.toFixed(decimals);
+}
+
+function scoreClass(score) {
+    if (score === null || score === undefined || isNaN(score)) return '';
+    if (score >= 70) return 'high';
+    if (score >= 40) return 'mid';
+    if (score > 0) return 'low';
+    return '';
+}
+
+function getStockAvatar(code) {
+    const logo = STOCK_LOGOS[code];
+    if (logo) {
+        return `<span class="stock-avatar has-logo"><img src="${logo}" alt="${code}" loading="lazy" onerror="this.parentElement.classList.remove('has-logo');this.parentElement.textContent='${code.charAt(0)}'"></span>`;
+    }
+    return `<span class="stock-avatar">${code.charAt(0)}</span>`;
+}
+
+function getRiskTags(item) {
+    const tags = [];
+    const pe = Number(item.pe);
+    const pb = Number(item.pb);
+    const roe = Number(item.roe);
+    const revG = Number(item.revenue_growth);
+    const divY = Number(item.dividend_yield);
+    const mom6m = Number(item.momentum_6m);
+    const mom1y = Number(item.momentum_1y);
+    const vol = Number(item.volatility_1y);
+    const mdd = Number(item.max_drawdown_1y);
+    const sector = (item.sector || '');
+
+    if (pe > 40 && pe < 500) tags.push('<span class="tag-risk overvalued">高估值</span>');
+    if (revG > 30) tags.push('<span class="tag-risk high-growth">高成长</span>');
+    if (roe > 25) tags.push('<span class="tag-risk stable-cf">稳定现金流</span>');
+    if (divY < 0.5 && divY > 0) tags.push('<span class="tag-risk low-div">低股息</span>');
+    if (mom1y > 50) tags.push('<span class="tag-risk high-growth">强势动量</span>');
+    if (mom1y < -30) tags.push('<span class="tag-risk overvalued">弱势动量</span>');
+    if (vol > 60) tags.push('<span class="tag-risk overvalued">高波动</span>');
+    if (mdd > 40) tags.push('<span class="tag-risk overvalued">大回撤</span>');
+    if (sector.includes('科技') || sector.includes('通信')) tags.push('<span class="tag-risk mega-tech">巨头科技</span>');
+    if (tags.length === 0) tags.push('<span class="tag-na">-</span>');
+    return tags.join(' ');
+}
+
+// ===== Strategy =====
+function selectStrategy(name) {
+    currentStrategy = name;
+    document.querySelectorAll('.strategy-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.strategy === name);
+    });
+    const s = STRATEGIES[name];
+    document.getElementById('strategyDesc').textContent = s.desc;
+    document.getElementById('wQuality').value = s.quality;
+    document.getElementById('wQualityVal').textContent = s.quality;
+    document.getElementById('wGrowth').value = s.growth;
+    document.getElementById('wGrowthVal').textContent = s.growth;
+    document.getElementById('wValue').value = s.value;
+    document.getElementById('wValueVal').textContent = s.value;
+    document.getElementById('wShareholder').value = s.shareholder;
+    document.getElementById('wShareholderVal').textContent = s.shareholder;
+    loadData();
+}
+
+function updateWeightDisplay() {
+    const q = parseInt(document.getElementById('wQuality').value);
+    const g = parseInt(document.getElementById('wGrowth').value);
+    const v = parseInt(document.getElementById('wValue').value);
+    const s = parseInt(document.getElementById('wShareholder').value);
+    document.getElementById('wQualityVal').textContent = q;
+    document.getElementById('wGrowthVal').textContent = g;
+    document.getElementById('wValueVal').textContent = v;
+    document.getElementById('wShareholderVal').textContent = s;
+    document.getElementById('strategyDesc').textContent = `自定义：质量 ${q}% · 成长 ${g}% · 估值 ${v}% · 股东回报 ${s}%`;
+    document.querySelectorAll('.strategy-btn').forEach(btn => btn.classList.remove('active'));
+}
+
+function toggleAdvanced() {
+    const panel = document.getElementById('advancedPanel');
+    const toggle = document.getElementById('advancedToggle');
+    panel.classList.toggle('open');
+    toggle.classList.toggle('open');
+}
+
+// ===== Data Loading =====
+async function loadData() {
+    const loadingEl = document.getElementById('loadingIndicator');
+    const errorEl = document.getElementById('errorIndicator');
+    const tableEl = document.getElementById('tableContainer');
+
+    loadingEl.style.display = 'block';
+    errorEl.style.display = 'none';
+    tableEl.style.display = 'none';
+
+    try {
+        const params = new URLSearchParams({
+            market: 'us',
+            limit: '500',
+            offset: '0',
+        });
+        if (currentSector) {
+            params.set('sector', currentSector);
+        }
+
+        const resp = await fetch(`/stocks?${params.toString()}`);
+        const json = await resp.json();
+
+        if (json.code !== 1) {
+            throw new Error(json.message || '获取数据失败');
+        }
+
+        allData = json.data || [];
+        document.getElementById('totalCount').textContent = json.total || 0;
+        document.getElementById('valuationDate').textContent = json.data?.[0]?.valuation_date || '-';
+
+        loadingEl.style.display = 'none';
+        tableEl.style.display = 'block';
+
+        currentPage = 0;
+        renderTable();
+    } catch (err) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.innerHTML = `❌ ${err.message}<br><br>
+            <button class="btn btn-primary" onclick="loadData()">重试</button>
+            <br><br>
+            <small style="color:#64748b;">提示：请先运行 <code>python -m collector.update_us_stocks</code> 更新美股数据</small>`;
+    }
+}
+
+// ===== Render =====
+function renderTable() {
+    const sorted = [...allData].sort((a, b) => {
+        let va = a[sortBy];
+        let vb = b[sortBy];
+        if (va === null || va === undefined) va = sortOrder === 'asc' ? Infinity : -Infinity;
+        if (vb === null || vb === undefined) vb = sortOrder === 'asc' ? Infinity : -Infinity;
+        if (sortOrder === 'asc') return va > vb ? 1 : -1;
+        return va < vb ? 1 : -1;
+    });
+
+    const total = sorted.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (currentPage >= totalPages) currentPage = totalPages - 1;
+    const start = currentPage * pageSize;
+    const end = Math.min(start + pageSize, total);
+    const pageData = sorted.slice(start, end);
+
+    document.getElementById('displayCount').textContent = pageData.length;
+
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = pageData.map((item, i) => {
+        const rank = start + i + 1;
+        const score = item.total_score !== null && item.total_score !== undefined ? Number(item.total_score) : null;
+        const scoreCls = scoreClass(score);
+        const rankCls = rank === 1 ? 'top1' : rank <= 3 ? 'top3' : rank <= 5 ? 'top5' : rank <= 10 ? 'top10' : '';
+        const rowCls = rank <= 3 ? 'top3' : rank <= 10 ? 'top10' : '';
+        const hasScore = score !== null && !isNaN(score);
+        const barPct = hasScore ? Math.min(100, Math.max(0, score)) : 0;
+
+        return `<tr class="${rowCls}">
+            <td class="text-center"><span class="rank-badge ${rankCls}">${rank}</span></td>
+            <td><div class="stock-cell">${getStockAvatar(item.code)}<div class="stock-name"><span class="code">${item.code || '-'}</span></div></div></td>
+            <td><div class="stock-name"><span class="name">${item.name || '-'}</span></div></td>
+            <td>${item.sector ? `<span class="tag tag-sector">${item.sector}</span>` : '<span class="tag-na">暂无数据</span>'}</td>
+            <td class="text-right">${fmt(item.pe)}</td>
+            <td class="text-right">${fmt(item.pb)}</td>
+            <td class="text-right">${fmt(item.roe)}</td>
+            <td class="text-right">${fmt(item.revenue_growth)}</td>
+            <td class="text-right">${fmt(item.profit_growth)}</td>
+            <td class="text-right">${fmt(item.dividend_yield)}</td>
+            <td class="text-right">${fmt(item.momentum_6m)}</td>
+            <td class="text-right">${fmt(item.momentum_1y)}</td>
+            <td class="text-right">${fmt(item.volatility_1y)}</td>
+            <td class="text-right">${fmt(item.max_drawdown_1y)}</td>
+            <td class="text-right"><div class="score-bar-wrap"><div class="score-bar"><div class="score-bar-fill ${hasScore ? scoreCls : ''}" style="width:${barPct}%"></div></div><span class="score-val ${hasScore ? scoreCls : ''}">${hasScore ? score.toFixed(1) : '<span class="tag-na">暂无数据</span>'}</span></div></td>
+            <td>${getRiskTags(item)}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('pageInfo').textContent = `第 ${currentPage + 1} 页，共 ${totalPages} 页`;
+    document.getElementById('prevBtn').disabled = currentPage <= 0;
+    document.getElementById('nextBtn').disabled = currentPage >= totalPages - 1;
+}
+
+function prevPage() {
+    if (currentPage > 0) { currentPage--; renderTable(); }
+}
+
+function nextPage() {
+    const totalPages = Math.ceil(allData.length / pageSize);
+    if (currentPage < totalPages - 1) { currentPage++; renderTable(); }
+}
+
+// ===== Event Bindings =====
+document.getElementById('pageSize').addEventListener('change', function() {
+    pageSize = parseInt(this.value);
+    currentPage = 0;
+    renderTable();
+});
+
+document.getElementById('sortBy').addEventListener('change', function() {
+    sortBy = this.value;
+    currentPage = 0;
+    renderTable();
+});
+
+document.getElementById('sortOrder').addEventListener('change', function() {
+    sortOrder = this.value;
+    currentPage = 0;
+    renderTable();
+});
+
+// ===== Sector Buttons =====
+function initSectorButtons() {
+    const container = document.getElementById('sectorBtns');
+    SECTORS.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'sector-btn';
+        btn.dataset.sector = s;
+        btn.textContent = s;
+        btn.onclick = () => selectSector(s);
+        container.appendChild(btn);
+    });
+}
+
+function selectSector(sector) {
+    currentSector = currentSector === sector ? '' : sector;
+    document.querySelectorAll('.sector-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sector === currentSector);
+    });
+    currentPage = 0;
+    loadData();
+}
+
+// ===== Market Overview (mock data refresh) =====
+function initMarketOverview() {
+    // Static mock data - can be replaced with API call later
+    const mockData = {
+        sp500: { value: '5,180.42', change: '+0.82%', cls: 'positive' },
+        nasdaq: { value: '16,302.76', change: '+1.15%', cls: 'positive' },
+        us10y: { value: '4.38', change: '-2.3bp', cls: 'negative' },
+        vix: { value: '14.27', change: '-3.45%', cls: 'negative' }
+    };
+    document.getElementById('mktSP500').textContent = mockData.sp500.value;
+    document.getElementById('mktSP500Chg').textContent = mockData.sp500.change;
+    document.getElementById('mktSP500Chg').className = 'change ' + mockData.sp500.cls;
+    document.getElementById('mktNASDAQ').textContent = mockData.nasdaq.value;
+    document.getElementById('mktNASDAQChg').textContent = mockData.nasdaq.change;
+    document.getElementById('mktNASDAQChg').className = 'change ' + mockData.nasdaq.cls;
+    document.getElementById('mktUS10Y').textContent = mockData.us10y.value;
+    document.getElementById('mktUS10YChg').textContent = mockData.us10y.change;
+    document.getElementById('mktUS10YChg').className = 'change ' + mockData.us10y.cls;
+    document.getElementById('mktVIX').textContent = mockData.vix.value;
+    document.getElementById('mktVIXChg').textContent = mockData.vix.change;
+    document.getElementById('mktVIXChg').className = 'change ' + mockData.vix.cls;
+}
+
+// ===== Init =====
+initMarketOverview();
+initSectorButtons();
+selectStrategy('quality_growth');
+</script>
+</body>
+</html>

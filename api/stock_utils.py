@@ -1,0 +1,127 @@
+def detect_board(bs_code: str, symbol: str | None = None, market: str | None = None) -> str:
+    """Identify the stock board used by the first-version scoring universe."""
+    code = str(bs_code or "").strip().lower()
+    stock_symbol = str(symbol or "").strip()
+    stock_market = str(market or "").strip().lower()
+
+    if not stock_symbol and "." in code:
+        stock_symbol = code.split(".", 1)[1]
+    stock_symbol = stock_symbol.zfill(6)[-6:] if stock_symbol else ""
+
+    if code.startswith("bj.") or (stock_market == "bj" and stock_symbol.startswith(("8", "9"))):
+        return "bse"
+
+    if code.startswith(("sz.300", "sz.301")):
+        return "gem"
+
+    if code.startswith("sh.688"):
+        return "star"
+
+    if code.startswith(("sh.600", "sh.601", "sh.603", "sh.605")):
+        return "main_board"
+
+    if code.startswith(("sz.000", "sz.001", "sz.002")):
+        return "main_board"
+
+    return "unknown"
+
+
+BOARD_LABELS = {
+    "main_board": "沪深主板",
+    "gem": "创业板",
+    "star": "科创板",
+    "bse": "北交所",
+    "unknown": "未知",
+    "all": "全部已入库",
+}
+
+
+VALID_BOARD_FILTERS = {"main_board", "gem", "star", "bse", "unknown", "all"}
+
+
+# ===== 一级板块（sector）分类 =====
+
+SECTOR_LABELS = {
+    "金融": "金融",
+    "消费": "消费",
+    "医药": "医药",
+    "科技": "科技",
+    "制造": "制造",
+    "周期": "周期",
+    "地产基建": "地产基建",
+    "公用环保": "公用环保",
+}
+
+VALID_SECTORS = set(SECTOR_LABELS.keys())
+
+# 根据股票名称关键词映射到一级板块
+SECTOR_KEYWORDS: dict[str, list[str]] = {
+    "金融": [
+        "银行", "保险", "证券", "信托", "期货", "基金", "金融",
+        "投资", "信贷", "融资", "担保", "资产管", "券商",
+        "中国人寿", "中国平安", "新华保险", "太保",
+    ],
+    "消费": [
+        "食品", "饮料", "白酒", "啤酒", "乳业", "乳品", "调味",
+        "家电", "电器", "服装", "纺织", "鞋帽", "商贸",
+        "零售", "百货", "超市", "电商", "旅游", "酒店",
+        "餐饮", "教育", "传媒", "影视", "广告", "游戏",
+        "出版", "体育", "娱乐", "家居", "家具", "日化",
+        "美容", "化妆品", "汽车", "整车", "乘用车",
+        "格力", "美的", "海尔", "茅台", "五粮液",
+    ],
+    "医药": [
+        "医药", "制药", "生物", "医疗", "器械", "诊断",
+        "疫苗", "血制", "药房", "药店", "中药", "化学药",
+        "创新药", "仿制药", "医美", "健康", "康养",
+        "恒瑞", "迈瑞", "药明", "复星医药",
+    ],
+    "科技": [
+        "半导体", "芯片", "软件", "通信", "电子", "计算机",
+        "互联网", "人工智能", "AI", "大数据", "云计算",
+        "物联网", "5G", "光通信", "元器件", "电路",
+        "显示", "面板", "LED", "激光", "机器人",
+        "自动化", "智能", "数码", "信息", "网络",
+        "海康", "中兴", "中芯",
+    ],
+    "制造": [
+        "机械", "装备", "电气", "军工", "航空", "航天",
+        "船舶", "兵器", "轻工", "通用设备", "专用设备",
+        "仪器", "仪表", "模具", "零部件", "发动机",
+        "柴油机", "机床", "轴承", "液压", "铸造",
+        "三一重工", "中联重科",
+    ],
+    "周期": [
+        "有色", "钢铁", "煤炭", "化工", "石化", "石油",
+        "建材", "水泥", "玻璃", "陶瓷", "采矿", "冶炼",
+        "金属", "黄金", "稀土", "锂", "钴", "镍",
+        "化肥", "农药", "化纤", "塑料", "橡胶",
+        "万华化学", "宝钢", "中国石油", "中国石化",
+    ],
+    "地产基建": [
+        "房地产", "地产", "开发", "园区", "基建", "建筑",
+        "工程", "装修", "装饰", "物业", "园林", "市政",
+        "路桥", "隧道", "铁建", "中交", "中国建筑",
+        "万科", "保利", "招商蛇口",
+    ],
+    "公用环保": [
+        "电力", "发电", "电网", "燃气", "水务", "供水",
+        "环保", "环境", "节能", "新能源", "光伏", "风电",
+        "核能", "水电", "火电", "热电", "公交", "高速",
+        "公路", "铁路", "港口", "航运", "航空运输",
+        "物流", "快递", "机场", "长江电力", "中国核电",
+    ],
+}
+
+
+def map_sector_by_name(stock_name: str) -> str | None:
+    """根据股票名称关键词映射到一级板块。"""
+    if not stock_name:
+        return None
+
+    for sector, keywords in SECTOR_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in stock_name:
+                return sector
+
+    return None

@@ -9,8 +9,28 @@ venv/
 env/
 
 config.py
+config/config.py
 
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .aider*
+
+# 日志文件
+logs/
+*.log
+
+# 美股缓存数据（自动生成）
+data/us_stocks/latest.json
+data/us_stocks/staging.json
+data/us_stocks/backup.json
+data/us_stocks/cache/
+data/us_stocks/raw/
+
+# 股票池数据（自动生成）
+data/stock_pool.csv
+data/full_stock_pool.csv
+
+# 系统配置
+scripts/update-us-stocks.service
+scripts/update-us-stocks.timer

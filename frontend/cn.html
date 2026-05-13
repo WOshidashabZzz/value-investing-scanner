@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>A股稳健价值评分系统</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, "Microsoft YaHei", sans-serif;
+            margin: 0;
+            background: #f3f6fb;
+            color: #1f2937;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1550px;
+            margin: 28px auto 40px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+            padding: 28px 30px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            border: 1px solid #eef2f7;
+        }
+
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            letter-spacing: 0.5px;
+            color: #111827;
+        }
+
+        .subtitle {
+            color: #4b5563;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 8px 13px;
+            border-radius: 999px;
+            background: #eaf3ff;
+            color: #1677ff;
+            font-weight: 700;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px 24px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+            border: 1px solid #eef2f7;
+        }
+
+        .controls-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #111827;
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 18px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .factor-row {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            align-items: stretch;
+            margin: 4px 0 12px;
+        }
+
+        .factor-group {
+            min-height: 114px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: #fbfcfe;
+        }
+
+        .factor-group-title {
+            margin-bottom: 8px;
+            color: #111827;
+            font-size: 15px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .factor-inputs {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: center;
+            gap: 8px 10px;
+            align-items: center;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #374151;
+            font-size: 14px;
+            min-height: 36px;
+            white-space: nowrap;
+        }
+
+        .factor-group .control-item {
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .factor-group input {
+            width: 70px;
+            padding: 7px 8px;
+        }
+
+        .factor-group .factor-long-label {
+            font-size: 12px;
+        }
+
+        .control-item label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            line-height: 1.35;
+        }
+
+        .factor-hint {
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+
+        input {
+            width: 76px;
+            padding: 8px 9px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            background: #fff;
+            outline: none;
+            transition: border 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        input:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.12);
+        }
+
+        input[readonly] {
+            color: #6b7280;
+            background: #f3f4f6;
+            cursor: not-allowed;
+        }
+
+        select {
+            min-width: 118px;
+            padding: 8px 9px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            background: #fff;
+            outline: none;
+        }
+
+        .btn {
+            padding: 9px 18px;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.18s ease;
+        }
+
+        .btn-primary {
+            background: #1677ff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0958d9;
+        }
+
+        .btn-secondary {
+            background: #eef4ff;
+            color: #1677ff;
+        }
+
+        .btn-secondary:hover {
+            background: #dceaff;
+        }
+
+        .btn-sector {
+            padding: 7px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            background: #fff;
+            color: #374151;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .btn-sector:hover {
+            border-color: #1677ff;
+            color: #1677ff;
+            background: #f0f6ff;
+        }
+
+        .btn-sector.active {
+            background: #1677ff;
+            color: white;
+            border-color: #1677ff;
+        }
+
+        .hint {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .validation-message {
+            display: none;
+            margin: 10px 0 12px;
+            padding: 10px 12px;
+            border: 1px solid #fed7aa;
+            border-radius: 10px;
+            background: #fff7ed;
+            color: #c2410c;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        input.input-error {
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+        }
+
+        .info-box {
+            background: white;
+            padding: 22px 24px 24px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+            border: 1px solid #eef2f7;
+        }
+
+        .section-title {
+            margin: 0 0 18px 0;
+            font-size: 23px;
+            color: #111827;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .info-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 17px;
+            background: #fbfcfe;
+            transition: all 0.18s ease;
+        }
+
+        .info-card:hover {
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+            transform: translateY(-2px);
+            background: #ffffff;
+        }
+
+        .info-card h3 {
+            margin: 0 0 14px 0;
+            font-size: 17px;
+            color: #1677ff;
+        }
+
+        .info-item {
+            margin-bottom: 12px;
+            line-height: 1.8;
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .formula-text {
+            color: #374151;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 13px;
+            background: #f0f3f8;
+            padding: 5px 8px;
+            border-radius: 7px;
+            display: inline-block;
+            margin-top: 5px;
+            line-height: 1.5;
+        }
+
+        .strategy-note {
+            margin-top: 18px;
+            color: #4b5563;
+            line-height: 1.9;
+            font-size: 14px;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 14px 16px;
+            border: 1px solid #edf2f7;
+        }
+
+        .summary {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+            color: #4b5563;
+            border: 1px solid #eef2f7;
+            line-height: 1.8;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            margin: -8px 0 16px;
+        }
+
+        .page-info {
+            color: #4b5563;
+            font-size: 14px;
+            min-width: 88px;
+            text-align: center;
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+            border: 1px solid #eef2f7;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            border-bottom: 1px solid #edf2f7;
+            padding: 11px 9px;
+            text-align: center;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        tbody tr:hover {
+            background: #fafcff;
+        }
+
+        .rank {
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .stock-name {
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .score {
+            font-weight: 800;
+            color: #1677ff;
+        }
+
+        .risk-cell {
+            max-width: 260px;
+            white-space: normal;
+            text-align: left;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 999px;
+            background: #fff7e6;
+            color: #d46b08;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .risk-ok {
+            background: #f0fdf4;
+            color: #15803d;
+        }
+
+        .footer {
+            margin-top: 18px;
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.8;
+            padding: 0 2px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 34px;
+            color: #6b7280;
+        }
+
+        .error {
+            text-align: center;
+            padding: 34px;
+            color: #c41d1d;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .nav-links a {
+            color: #1677ff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 1250px) {
+            .info-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .hero-top {
+                flex-direction: column;
+            }
+
+            .factor-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 96%;
+                margin: 16px auto 30px;
+            }
+
+            h1 {
+                font-size: 25px;
+            }
+
+            .hero,
+            .controls,
+            .info-box,
+            .summary,
+            .table-card {
+                border-radius: 12px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .factor-row {
+                grid-template-columns: 1fr;
+            }
+
+            .table-card {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 1200px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="hero">
+        <div class="hero-top">
+            <div>
+                <h1>A股稳健价值评分系统</h1>
+                <div class="subtitle">
+                    默认策略：综合考虑估值、盈利能力、成长性和分红水平，筛选可能被低估且基本面相对稳健的股票。
+                    <br>
+                    本系统仅用于学习和辅助分析，不构成投资建议。
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+                <span class="hero-badge">稳健价值策略 V1</span>
+                <div class="nav-links">
+                    <a href="/">🏠 首页</a>
+                    <a href="/us.html">🇺🇸 美股</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="controls-title">策略权重设置</div>
+
+        <div class="control-row">
+            <div class="control-item">
+                <label>
+                    <span>估值权重</span>
+                    <span class="factor-hint">模块总权重</span>
+                </label>
+                <input type="number" id="valuationWeight" value="35" min="0" max="100" step="1">
+                <span>%</span>
+            </div>
+
+            <div class="control-item">
+                <label>
+                    <span>质量权重</span>
+                    <span class="factor-hint">模块总权重</span>
+                </label>
+                <input type="number" id="qualityWeight" value="30" min="0" max="100" step="1">
+                <span>%</span>
+            </div>
+
+            <div class="control-item">
+                <label>
+                    <span>成长权重</span>
+                    <span class="factor-hint">模块总权重</span>
+                </label>
+                <input type="number" id="growthWeight" value="25" min="0" max="100" step="1">
+                <span>%</span>
+            </div>
+
+            <div class="control-item">
+                <label>
+                    <span>分红权重</span>
+                    <span class="factor-hint">模块总权重</span>
+                </label>
+                <input type="number" id="dividendWeight" value="10" min="0" max="100" step="1">
+                <span>%</span>
+            </div>
+
+            <div class="control-item">
+                <label>显示数量</label>
+                <input type="number" id="limit" value="50" min="1" max="500" step="1">
+            </div>
+
+            <button class="btn btn-primary" onclick="loadStocks(true)">重新计算</button>
+            <button class="btn btn-secondary" onclick="resetWeights()">恢复默认</button>
+        </div>
+
+        <div class="control-row" id="sectorFilterRow">
+            <div class="control-item" style="font-weight:700;color:#111827;font-size:14px;">板块筛选：</div>
+            <div id="sectorButtons"></div>
+        </div>
+
+        <div class="factor-row">
+            <div class="factor-group">
+                <div class="factor-group-title">估值模块内因子权重</div>
+                <div class="factor-inputs">
+                    <div class="control-item">
+                        <label>PE</label>
+                        <input type="number" id="peWeight" value="63" min="0" max="100" step="0.5">
+                        <span>%</span>
+                    </div>
+                    <div class="control-item">
+                        <label>PB</label>
+                        <input type="number" id="pbWeight" value="37" min="0" max="100" step="0.5">
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="factor-group">
+                <div class="factor-group-title">质量模块内因子权重</div>
+                <div class="factor-inputs">
+                    <div class="control-item">
+                        <label>ROE</label>
+                        <input type="number" id="roeWeight" value="100" min="100" max="100" step="1" readonly>
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="factor-group factor-group-growth">
+                <div class="factor-group-title">成长模块内因子权重</div>
+                <div class="factor-inputs">
+                    <div class="control-item">
+                        <label class="factor-long-label">营收增长率</label>
+                        <input type="number" id="revenueGrowthWeight" value="50" min="0" max="100" step="0.5">
+                        <span>%</span>
+                    </div>
+                    <div class="control-item">
+                        <label class="factor-long-label">净利润增长率</label>
+                        <input type="number" id="profitGrowthWeight" value="50" min="0" max="100" step="0.5">
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="factor-group">
+                <div class="factor-group-title">分红模块内因子权重</div>
+                <div class="factor-inputs">
+                    <div class="control-item">
+                        <label>股息率</label>
+                        <input type="number" id="dividendYieldWeight" value="100" min="100" max="100" step="1" readonly>
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="validation-message" id="validationMessage"></div>
+
+        <div class="hint">
+            模块权重控制四类评分在总分中的占比；模块内因子权重控制同一模块内各因子的相对重要性。
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h2 class="section-title">指标说明</h2>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>PE（市盈率）</h3>
+                <div class="info-item">
+                    <span class="info-label">公式：</span><br>
+                    <span class="formula-text">PE = 股价 ÷ 每股收益</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">白话：</span>
+                    看你花多少钱，买到公司 1 份赚钱能力。一般来说，PE 越低，通常说明估值越便宜。
+                </div>
+                <div class="info-item">
+                    <span class="info-label">注意：</span>
+                    PE 低不一定就是好事，也可能是市场担心公司未来变差。
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>PB（市净率）</h3>
+                <div class="info-item">
+                    <span class="info-label">公式：</span><br>
+                    <span class="formula-text">PB = 股价 ÷ 每股净资产</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">白话：</span>
+                    看股价相对于公司账面资产贵不贵。一般来说，PB 越低，通常说明资产估值越便宜。
+                </div>
+                <div class="info-item">
+                    <span class="info-label">注意：</span>
+                    PB 对银行、建筑、地产这类重资产公司更有参考意义。
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>ROE（净资产收益率）</h3>
+                <div class="info-item">
+                    <span class="info-label">公式：</span><br>
+                    <span class="formula-text">ROE = 净利润 ÷ 净资产 × 100%</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">白话：</span>
+                    看公司用股东的钱赚钱的能力。一般来说，ROE 越高，说明公司盈利能力越强。
+                </div>
+                <div class="info-item">
+                    <span class="info-label">注意：</span>
+                    ROE 不能单独看，还要结合估值和增长一起看。
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>营收增长率</h3>
+                <div class="info-item">
+                    <span class="info-label">公式：</span><br>
+                    <span class="formula-text">营收增长率 =（本期营收 - 上期营收）÷ 上期营收 × 100%</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">白话：</span>
+                    看公司的生意规模有没有继续扩大。一般来说，营收增长率越高，说明公司业务还在增长。
+                </div>
+                <div class="info-item">
+                    <span class="info-label">注意：</span>
+                    营收增长不代表利润一定增长，但能反映业务扩张情况。
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>净利润增长率</h3>
+                <div class="info-item">
+                    <span class="info-label">公式：</span><br>
+                    <span class="formula-text">净利润增长率 =（本期净利润 - 上期净利润）÷ 上期净利润 × 100%</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">白话：</span>
+                    看公司最后赚到的钱有没有变多。一般来说，净利润增长率越高，说明公司盈利改善更明显。
+                </div>
+                <div class="info-item">
+                    <span class="info-label">注意：</span>
+                    如果净利润增长为负，说明公司盈利可能在下滑。
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>股息率</h3>
+                <div class="info-item">
+                    <span class="info-label">公式：</span><br>
+                    <span class="formula-text">股息率 = 每股分红 ÷ 股价 × 100%</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">白话：</span>
+                    看公司愿不愿意通过分红回报股东。一般来说，股息率越高，分红回报越明显。
+                </div>
+                <div class="info-item">
+                    <span class="info-label">注意：</span>
+                    股息率高也不一定就是好事，有时可能是股价下跌造成的。
+                </div>
+            </div>
+        </div>
+
+        <div class="strategy-note">
+            本系统从四个角度看股票：<b>估值</b>、<b>盈利能力</b>、<b>成长性</b>、<b>分红水平</b>。
+            目标不是直接"推荐买入"，而是帮助你找出值得进一步研究的股票。
+        </div>
+    </div>
+
+    <div class="summary" id="summary">
+        数据加载中...
+    </div>
+
+    <div class="pagination">
+        <button class="btn btn-secondary" id="prevPageBtn" onclick="previousPage()">上一页</button>
+        <span class="page-info" id="pageInfo">第 1 页</span>
+        <button class="btn btn-secondary" id="nextPageBtn" onclick="nextPage()">下一页</button>
+    </div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+            <tr>
+                <th>排名</th>
+                <th>代码</th>
+                <th>名称</th>
+                <th>综合评分</th>
+                <th>估值评分</th>
+                <th>质量评分</th>
+                <th>成长评分</th>
+                <th>分红评分</th>
+                <th>PE</th>
+                <th>PB</th>
+                <th>ROE</th>
+                <th>营收增长率</th>
+                <th>净利润增长率</th>
+                <th>股息率</th>
+                <th>风险标签</th>
+            </tr>
+            </thead>
+            <tbody id="stockTableBody">
+            <tr>
+                <td colspan="15" class="loading">数据加载中...</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        说明：评分采用当前股票池内的相对排名法。分数越高，表示该股票在当前因子体系下越值得进一步关注，但不代表未来收益或买入建议。
+        <br>
+        建议结合行业、财报、公司基本面和市场风险进一步分析。
+    </div>
+
+</div>
+
+<script>
+    const factorNameMap = {
+        pe_ttm: "PE",
+        pb: "PB",
+        roe: "ROE",
+        revenue_growth: "营收增长率",
+        profit_growth: "净利润增长率",
+        dividend_yield: "股息率"
+    };
+
+    let currentOffset = 0;
+    let currentLimit = 50;
+    let currentTotal = 0;
+    let currentHasNext = false;
+    let currentKeyword = "";
+    let currentSector = "";
+    let sectorList = [];
+
+    function formatFactorNames(factorStr) {
+        if (!factorStr) return "-";
+
+        return factorStr
+            .split(",")
+            .map(item => item.trim())
+            .filter(item => item.length > 0)
+            .map(item => factorNameMap[item] || item)
+            .join("、");
+    }
+
+    function formatValue(value, suffix = "") {
+        if (value === null || value === undefined || value === "") {
+            return "-";
+        }
+
+        const num = Number(value);
+
+        if (Number.isNaN(num)) {
+            return value;
+        }
+
+        return num.toFixed(2) + suffix;
+    }
+
+    function formatRiskTags(tags) {
+        if (!tags || tags === "-") {
+            return `<span class="risk-badge risk-ok">暂无明显风险</span>`;
+        }
+
+        if (tags === "暂无明显风险") {
+            return `<span class="risk-badge risk-ok">暂无明显风险</span>`;
+        }
+
+        return tags
+            .split(/[、,，]/)
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0)
+            .map(tag => `<span class="risk-badge">${tag}</span>`)
+            .join("");
+    }
+
+    function resetWeights() {
+        document.getElementById("valuationWeight").value = 35;
+        document.getElementById("qualityWeight").value = 30;
+        document.getElementById("growthWeight").value = 25;
+        document.getElementById("dividendWeight").value = 10;
+        document.getElementById("peWeight").value = 63;
+        document.getElementById("pbWeight").value = 37;
+        document.getElementById("roeWeight").value = 100;
+        document.getElementById("revenueGrowthWeight").value = 50;
+        document.getElementById("profitGrowthWeight").value = 50;
+        document.getElementById("dividendYieldWeight").value = 100;
+        document.getElementById("limit").value = 50;
+        document.getElementById("searchInput").value = "";
+        currentKeyword = "";
+        currentSector = "";
+        clearValidationMessage();
+        updateSectorButtons();
+        loadStocks(true);
+    }
+
+    function setValidationMessage(message, fieldIds = []) {
+        const box = document.getElementById("validationMessage");
+        box.innerText = message;
+        box.style.display = "block";
+
+        [
+            "valuationWeight", "qualityWeight", "growthWeight", "dividendWeight",
+            "peWeight", "pbWeight", "roeWeight", "revenueGrowthWeight",
+            "profitGrowthWeight", "dividendYieldWeight", "limit"
+        ]
+            .forEach(id => document.getElementById(id).classList.remove("input-error"));
+
+        fieldIds.forEach(id => document.getElementById(id).classList.add("input-error"));
+    }
+
+    function clearValidationMessage() {
+        const box = document.getElementById("validationMessage");
+        box.innerText = "";
+        box.style.display = "none";
+
+        [
+            "valuationWeight", "qualityWeight", "growthWeight", "dividendWeight",
+            "peWeight", "pbWeight", "roeWeight", "revenueGrowthWeight",
+            "profitGrowthWeight", "dividendYieldWeight", "limit"
+        ]
+            .forEach(id => document.getElementById(id).classList.remove("input-error"));
+    }
+
+    function readNumberInput(id) {
+        const rawValue = document.getElementById(id).value;
+        const value = Number(rawValue);
+        return Number.isFinite(value) ? value : null;
+    }
+
+    function validateControls() {
+        const weights = {
+            valuationWeight: readNumberInput("valuationWeight"),
+            qualityWeight: readNumberInput("qualityWeight"),
+            growthWeight: readNumberInput("growthWeight"),
+            dividendWeight: readNumberInput("dividendWeight")
+        };
+        const factorWeights = {
+            peWeight: readNumberInput("peWeight"),
+            pbWeight: readNumberInput("pbWeight"),
+            roeWeight: readNumberInput("roeWeight"),
+            revenueGrowthWeight: readNumberInput("revenueGrowthWeight"),
+            profitGrowthWeight: readNumberInput("profitGrowthWeight"),
+            dividendYieldWeight: readNumberInput("dividendYieldWeight")
+        };
+        const limit = readNumberInput("limit");
+
+        const invalidWeightIds = Object.entries(weights)
+            .filter(([, value]) => value === null || value < 0 || value > 100)
+            .map(([id]) => id);
+
+        if (invalidWeightIds.length > 0) {
+            setValidationMessage("权重必须是 0 到 100 之间的数字，不能输入负数。", invalidWeightIds);
+            return null;
+        }
+
+        const invalidFactorWeightIds = Object.entries(factorWeights)
+            .filter(([, value]) => value === null || value < 0 || value > 100)
+            .map(([id]) => id);
+
+        if (invalidFactorWeightIds.length > 0) {
+            setValidationMessage("因子权重必须是 0 到 100 之间的数字，不能输入负数。", invalidFactorWeightIds);
+            return null;
+        }
+
+        const totalWeight =
+            weights.valuationWeight +
+            weights.qualityWeight +
+            weights.growthWeight +
+            weights.dividendWeight;
+
+        if (Math.abs(totalWeight - 100) > 0.0001) {
+            setValidationMessage(`四个模块权重之和必须等于 100%，当前合计为 ${totalWeight.toFixed(2)}%。`, [
+                "valuationWeight",
+                "qualityWeight",
+                "growthWeight",
+                "dividendWeight"
+            ]);
+            return null;
+        }
+
+        const moduleFactorRules = [
+            {
+                moduleId: "valuationWeight",
+                moduleName: "估值模块",
+                factorIds: ["peWeight", "pbWeight"]
+            },
+            {
+                moduleId: "qualityWeight",
+                moduleName: "质量模块",
+                factorIds: ["roeWeight"]
+            },
+            {
+                moduleId: "growthWeight",
+                moduleName: "成长模块",
+                factorIds: ["revenueGrowthWeight", "profitGrowthWeight"]
+            },
+            {
+                moduleId: "dividendWeight",
+                moduleName: "分红模块",
+                factorIds: ["dividendYieldWeight"]
+            }
+        ];
+
+        for (const rule of moduleFactorRules) {
+            const moduleWeight = weights[rule.moduleId];
+            const factorTotal = rule.factorIds.reduce((sum, id) => sum + factorWeights[id], 0);
+
+            if (Math.abs(factorTotal - 100) > 0.0001) {
+                setValidationMessage(`${rule.moduleName}模块内因子权重之和必须等于 100%，当前合计为 ${factorTotal.toFixed(2)}%。`, [
+                    ...rule.factorIds
+                ]);
+                return null;
+            }
+
+            if (moduleWeight > 0 && factorTotal <= 0) {
+                setValidationMessage(`${rule.moduleName}权重大于 0 时，模块内至少要有一个因子权重大于 0。`, [
+                    rule.moduleId,
+                    ...rule.factorIds
+                ]);
+                return null;
+            }
+        }
+
+        if (limit === null || !Number.isInteger(limit) || limit < 1 || limit > 500) {
+            setValidationMessage("显示数量必须是 1 到 500 之间的整数。", ["limit"]);
+            return null;
+        }
+
+        clearValidationMessage();
+        return {...weights, ...factorWeights, limit};
+    }
+
+    function updatePaginationControls() {
+        const pageInfo = document.getElementById("pageInfo");
+        const prevButton = document.getElementById("prevPageBtn");
+        const nextButton = document.getElementById("nextPageBtn");
+        const currentPage = Math.floor(currentOffset / currentLimit) + 1;
+
+        pageInfo.innerText = `第 ${currentPage} 页`;
+        prevButton.disabled = currentOffset <= 0;
+        nextButton.disabled = !currentHasNext;
+    }
+
+    function previousPage() {
+        currentOffset = Math.max(0, currentOffset - currentLimit);
+        loadStocks(false);
+    }
+
+    function nextPage() {
+        if (!currentHasNext) {
+            return;
+        }
+        currentOffset += currentLimit;
+        loadStocks(false);
+    }
+
+    async function loadStocks(resetPage = false) {
+        const controls = validateControls();
+        if (!controls) {
+            return;
+        }
+
+        currentLimit = controls.limit;
+        if (resetPage) {
+            currentOffset = 0;
+        }
+
+        const isSearch = currentKeyword.length > 0;
+        const basePath = isSearch ? "/stocks/search" : "/stocks";
+        let url =
+            `${basePath}?board=main_board` +
+            `&valuation_weight=${controls.valuationWeight}` +
+            `&quality_weight=${controls.qualityWeight}` +
+            `&growth_weight=${controls.growthWeight}` +
+            `&dividend_weight=${controls.dividendWeight}` +
+            `&pe_weight=${controls.peWeight}` +
+            `&pb_weight=${controls.pbWeight}` +
+            `&roe_weight=${controls.roeWeight}` +
+            `&revenue_growth_weight=${controls.revenueGrowthWeight}` +
+            `&profit_growth_weight=${controls.profitGrowthWeight}` +
+            `&dividend_yield_weight=${controls.dividendYieldWeight}` +
+            `&limit=${controls.limit}` +
+            `&offset=${currentOffset}` +
+            (isSearch ? `&q=${encodeURIComponent(currentKeyword)}` : "");
+
+        if (currentSector) {
+            url += `&sector=${encodeURIComponent(currentSector)}`;
+        }
+
+        const tbody = document.getElementById("stockTableBody");
+        const summary = document.getElementById("summary");
+
+        tbody.innerHTML = `<tr><td colspan="15" class="loading">数据加载中...</td></tr>`;
+        summary.innerText = "数据加载中...";
+
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.code !== 1) {
+                tbody.innerHTML = `<tr><td colspan="15" class="loading">${result.message || "请求参数不正确。"}</td></tr>`;
+                summary.innerText = result.message || "请求参数不正确。";
+                currentTotal = 0;
+                currentHasNext = false;
+                updatePaginationControls();
+                return;
+            }
+
+            currentTotal = Number(result.total || 0);
+            currentLimit = Number(result.limit || controls.limit);
+            currentOffset = Number(result.offset || 0);
+            currentHasNext = Boolean(result.has_next);
+
+            if (!result.data || result.data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="15" class="loading">暂无数据</td></tr>`;
+                summary.innerText = `暂无股票评分数据；总计 ${currentTotal} 只；当前第 ${Math.floor(currentOffset / currentLimit) + 1} 页。`;
+                updatePaginationControls();
+                return;
+            }
+
+            const first = result.data[0];
+            const currentPage = Math.floor(currentOffset / currentLimit) + 1;
+
+            summary.innerHTML =
+                `当前返回 <b>${result.count}</b> 只股票；总计 <b>${currentTotal}</b> 只；当前第 <b>${currentPage}</b> 页；` +
+                `估值日期：<b>${first.trade_date || "-"}</b>；` +
+                `财报期：<b>${first.report_date || "-"}</b>；` +
+                `参与因子：<b>${formatFactorNames(first.active_factors)}</b>` +
+                (first.inactive_factors
+                    ? `；暂未参与因子：<b>${formatFactorNames(first.inactive_factors)}</b>`
+                    : "");
+
+            tbody.innerHTML = "";
+
+            result.data.forEach((stock, index) => {
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td class="rank">${currentOffset + index + 1}</td>
+                    <td>${stock.bs_code}</td>
+                    <td class="stock-name">${stock.name}</td>
+                    <td class="score">${formatValue(stock.final_score)}</td>
+                    <td>${formatValue(stock.valuation_score)}</td>
+                    <td>${formatValue(stock.quality_score)}</td>
+                    <td>${formatValue(stock.growth_score)}</td>
+                    <td>${formatValue(stock.dividend_score)}</td>
+                    <td>${formatValue(stock.pe_ttm)}</td>
+                    <td>${formatValue(stock.pb)}</td>
+                    <td>${formatValue(stock.roe, "%")}</td>
+                    <td>${formatValue(stock.revenue_growth, "%")}</td>
+                    <td>${formatValue(stock.profit_growth, "%")}</td>
+                    <td>${formatValue(stock.dividend_yield, "%")}</td>
+                    <td class="risk-cell">${formatRiskTags(stock.risk_tags)}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            updatePaginationControls();
+        } catch (error) {
+            console.error(error);
+            tbody.innerHTML = `<tr><td colspan="15" class="error">请求失败，请确认 FastAPI 服务正在运行。</td></tr>`;
+            summary.innerText = "请求失败。";
+            currentHasNext = false;
+            updatePaginationControls();
+        }
+    }
+
+    /* ---- 板块筛选按钮 ---- */
+    function selectSector(sector) {
+        currentSector = (currentSector === sector) ? "" : sector;
+        updateSectorButtons();
+        loadStocks(true);
+    }
+
+    function updateSectorButtons() {
+        const container = document.getElementById("sectorButtons");
+        let html = `<button class="btn-sector${currentSector === "" ? " active" : ""}" onclick="selectSector('')">全部</button>`;
+        for (const s of sectorList) {
+            html += `<button class="btn-sector${currentSector === s ? " active" : ""}" onclick="selectSector('${s}')">${s}</button>`;
+        }
+        container.innerHTML = html;
+    }
+
+    async function loadSectors() {
+        try {
+            const resp = await fetch("/sectors");
+            const data = await resp.json();
+            if (data && data.sectors) {
+                sectorList = data.sectors.map(s => s.key);
+                updateSectorButtons();
+            }
+        } catch (e) {
+            console.error("加载板块列表失败", e);
+        }
+    }
+
+    loadSectors();
+    loadStocks(true);
+</script>
+
+</body>
+</html>
