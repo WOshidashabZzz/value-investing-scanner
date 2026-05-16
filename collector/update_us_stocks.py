@@ -85,11 +85,11 @@ from collector.cache_manager import (
 # S&P 500 成分股列表
 SP500_CSV = Path("data/sp500_symbols.csv")
 
-# 最小有效股票数量（S&P 500 的 90%）
-MIN_STOCK_COUNT = 450
+# 最小有效股票数量（本项目 S&P 500 列表约 341 只）
+MIN_STOCK_COUNT = 300
 
-# 核心字段列表
-REQUIRED_FIELDS = ["code", "name", "pe", "pb"]
+# 核心字段列表（PE/PB 可能部分缺失，不强制要求）
+REQUIRED_FIELDS = ["code", "name"]
 
 # 请求会话（全局复用）
 _session = None

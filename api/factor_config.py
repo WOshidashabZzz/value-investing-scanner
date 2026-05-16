@@ -41,7 +41,7 @@ FACTOR_CONFIG = {
 
 CATEGORY_WEIGHTS = {
     "valuation": 35,
-    "quality": 30,
-    "growth": 25,
+    "quality": 40,
+    "growth": 15,
     "dividend": 10,
 }

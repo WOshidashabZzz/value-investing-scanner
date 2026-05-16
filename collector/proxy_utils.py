@@ -83,7 +83,10 @@ def get_proxy_config() -> dict[str, str]:
     try:
         from config.config import PROXY_CONFIG
 
-        if PROXY_CONFIG and isinstance(PROXY_CONFIG, dict):
+        if PROXY_CONFIG is not None and isinstance(PROXY_CONFIG, dict):
+            # 空字典表示明确要求直连
+            if not PROXY_CONFIG:
+                return {}
             http_proxy = PROXY_CONFIG.get("http") or PROXY_CONFIG.get("HTTP_PROXY")
             https_proxy = PROXY_CONFIG.get("https") or PROXY_CONFIG.get("HTTPS_PROXY")
             if http_proxy or https_proxy:
@@ -100,7 +103,10 @@ def get_proxy_config() -> dict[str, str]:
     try:
         from config.config_example import PROXY_CONFIG
 
-        if PROXY_CONFIG and isinstance(PROXY_CONFIG, dict):
+        if PROXY_CONFIG is not None and isinstance(PROXY_CONFIG, dict):
+            # 空字典表示明确要求直连
+            if not PROXY_CONFIG:
+                return {}
             http_proxy = PROXY_CONFIG.get("http") or PROXY_CONFIG.get("HTTP_PROXY")
             https_proxy = PROXY_CONFIG.get("https") or PROXY_CONFIG.get("HTTPS_PROXY")
             if http_proxy or https_proxy:

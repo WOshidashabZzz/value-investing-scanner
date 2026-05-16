@@ -1,3 +1,5 @@
+import math
+
 import pandas as pd
 from sqlalchemy import text
 
@@ -76,25 +78,161 @@ def get_latest_valuation_data() -> pd.DataFrame:
     return get_latest_strategy_data()
 
 
-def score_factor_series(series, direction: str) -> pd.Series:
-    """按因子方向将原始数值转换为 0~100 分。"""
-    values = pd.to_numeric(series, errors="coerce").replace([float("inf"), float("-inf")], pd.NA)
+def _clamp_growth(value, field: str):
+    """对增长率做封顶处理，避免异常值冲榜。"""
+    if value is None or (isinstance(value, float) and (math.isnan(value) or math.isinf(value))):
+        return None
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return None
+    if field == "revenue_growth":
+        return max(-50.0, min(100.0, v))
+    elif field == "profit_growth":
+        return max(-100.0, min(150.0, v))
+    return v
+
+
+def score_pe_ttm(pe: float) -> float | None:
+    """PE 区间评分。
+    8~25 最优(100~80)，3~8 适当(80~60)，<3 异常低估(30)，
+    25~60 逐步降分(80~40)，60~100 低分(40~10)，<=0 或 >100 不参与。
+    """
+    if pe is None or math.isnan(pe) or pe <= 0 or pe > 100:
+        return None
+    if pe < 3:
+        return 30.0
+    if pe < 8:
+        # 3~8: 80~60 线性递减
+        return 80.0 - (pe - 3) / 5 * 20
+    if pe <= 25:
+        # 8~25: 100~80 线性递减
+        return 100.0 - (pe - 8) / 17 * 20
+    if pe <= 60:
+        # 25~60: 80~40 线性递减
+        return 80.0 - (pe - 25) / 35 * 40
+    # 60~100: 40~10 线性递减
+    return 40.0 - (pe - 60) / 40 * 30
+
+
+def score_pb(pb: float) -> float | None:
+    """PB 区间评分。
+    0.8~3.5 较合理(100~70)，0.5~0.8 偏低(70~50)，
+    <0.5 异常(30)，3.5~8 偏高(70~40)，>8 明显降权(20)，<=0 不参与。
+    """
+    if pb is None or math.isnan(pb) or pb <= 0:
+        return None
+    if pb < 0.5:
+        return 30.0
+    if pb < 0.8:
+        # 0.5~0.8: 50~70 线性递增
+        return 50.0 + (pb - 0.5) / 0.3 * 20
+    if pb <= 3.5:
+        # 0.8~3.5: 100~70 线性递减
+        return 100.0 - (pb - 0.8) / 2.7 * 30
+    if pb <= 8:
+        # 3.5~8: 70~40 线性递减
+        return 70.0 - (pb - 3.5) / 4.5 * 30
+    return 20.0
+
+
+def score_roe(roe: float) -> float | None:
+    """ROE 区间评分。
+    10%~25% 较优(80~100)，25%~40% 高分封顶(100)，
+    >40% 不额外加分(100)，3%~10% 一般(30~80)，<3% 明显降权(10)，<=0 不参与。
+    """
+    if roe is None or math.isnan(roe) or roe <= 0:
+        return None
+    if roe < 3:
+        return 10.0
+    if roe < 10:
+        # 3~10: 30~80 线性递增
+        return 30.0 + (roe - 3) / 7 * 50
+    if roe <= 25:
+        # 10~25: 80~100 线性递增
+        return 80.0 + (roe - 10) / 15 * 20
+    # >=25: 封顶 100
+    return 100.0
+
+
+def score_growth_rate(value: float) -> float | None:
+    """增长率评分（已封顶后的值）。
+    >30% 满分(100)，10%~30% 良好(80~100)，
+    0%~10% 一般(50~80)，-20%~0% 较差(20~50)，<-20% 最低(0~20)。
+    """
+    if value is None or math.isnan(value):
+        return None
+    if value > 30:
+        return 100.0
+    if value > 10:
+        # 10~30: 80~100
+        return 80.0 + (value - 10) / 20 * 20
+    if value > 0:
+        # 0~10: 50~80
+        return 50.0 + value / 10 * 30
+    if value > -20:
+        # -20~0: 20~50
+        return 20.0 + (value + 20) / 20 * 30
+    # <= -20: 0~20
+    return max(0, 20.0 + (value + 20) / 30 * 20)
+
+
+def score_dividend_yield(dy: float) -> float | None:
+    """股息率区间评分。
+    2%~6% 较优(80~100)，6%~10% 高股息(60~80)，
+    1%~2% 一般(40~80)，0%~1% 偏低(0~40)，>10% 异常(20)，<=0 不参与。
+    """
+    if dy is None or math.isnan(dy) or dy <= 0:
+        return None
+    if dy > 10:
+        return 20.0
+    if dy > 6:
+        # 6~10: 80~60 递减
+        return 80.0 - (dy - 6) / 4 * 20
+    if dy >= 2:
+        # 2~6: 80~100 递增
+        return 80.0 + (dy - 2) / 4 * 20
+    if dy >= 1:
+        # 1~2: 40~80 递增
+        return 40.0 + (dy - 1) / 1 * 40
+    # 0~1: 0~40
+    return dy / 1 * 40
+
+
+def score_factor_by_range(series, factor_name: str) -> pd.Series:
+    """按区间评分函数将因子原始值转换为 0~100 分。"""
     scores = pd.Series(float("nan"), index=series.index)
-    valid = values.dropna()
+    values = pd.to_numeric(series, errors="coerce")
 
-    if valid.empty:
-        return scores
+    # 先对增长率做封顶
+    if factor_name in ("revenue_growth", "profit_growth"):
+        values = values.apply(lambda v: _clamp_growth(v, factor_name))
 
-    ascending = direction == "lower_better"
-    ranks = valid.rank(method="min", ascending=ascending)
-    total = len(valid)
+    for idx, val in values.items():
+        if pd.isna(val) or val is None:
+            continue
+        try:
+            v = float(val)
+        except (TypeError, ValueError):
+            continue
 
-    if total == 1:
-        scores.loc[valid.index] = 100.0
-    else:
-        scores.loc[valid.index] = (1 - (ranks - 1) / (total - 1)) * 100
+        if factor_name == "pe_ttm":
+            s = score_pe_ttm(v)
+        elif factor_name == "pb":
+            s = score_pb(v)
+        elif factor_name == "roe":
+            s = score_roe(v)
+        elif factor_name in ("revenue_growth", "profit_growth"):
+            s = score_growth_rate(v)
+        elif factor_name == "dividend_yield":
+            s = score_dividend_yield(v)
+        else:
+            continue
 
-    return scores.clip(lower=0, upper=100).round(2)
+        if s is not None:
+            scores.at[idx] = round(s, 2)
+
+    return scores
 
 
 def is_factor_available(df, factor_name, min_valid_ratio=0.3) -> bool:
@@ -285,7 +423,8 @@ def calculate_score(
             result[factor] = pd.NA
         result[factor] = pd.to_numeric(result[factor], errors="coerce")
         if factor in active_factor_set:
-            result[f"{factor}_score"] = score_factor_series(result[factor], config["direction"])
+            # 使用区间评分替代原来的相对排名评分
+            result[f"{factor}_score"] = score_factor_by_range(result[factor], factor)
         else:
             result[f"{factor}_score"] = float("nan")
 

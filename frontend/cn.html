@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+guan<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -543,7 +543,6 @@
                 <span class="hero-badge">稳健价值策略 V1</span>
                 <div class="nav-links">
                     <a href="/">🏠 首页</a>
-                    <a href="/us.html">🇺🇸 美股</a>
                 </div>
             </div>
         </div>
@@ -567,7 +566,7 @@
                     <span>质量权重</span>
                     <span class="factor-hint">模块总权重</span>
                 </label>
-                <input type="number" id="qualityWeight" value="30" min="0" max="100" step="1">
+                <input type="number" id="qualityWeight" value="40" min="0" max="100" step="1">
                 <span>%</span>
             </div>
 
@@ -576,7 +575,7 @@
                     <span>成长权重</span>
                     <span class="factor-hint">模块总权重</span>
                 </label>
-                <input type="number" id="growthWeight" value="25" min="0" max="100" step="1">
+                <input type="number" id="growthWeight" value="15" min="0" max="100" step="1">
                 <span>%</span>
             </div>
 
@@ -882,8 +881,8 @@
 
     function resetWeights() {
         document.getElementById("valuationWeight").value = 35;
-        document.getElementById("qualityWeight").value = 30;
-        document.getElementById("growthWeight").value = 25;
+        document.getElementById("qualityWeight").value = 40;
+        document.getElementById("growthWeight").value = 15;
         document.getElementById("dividendWeight").value = 10;
         document.getElementById("peWeight").value = 63;
         document.getElementById("pbWeight").value = 37;

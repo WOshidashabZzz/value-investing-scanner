@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>港股核心资产分析</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            margin: 0;
+            background: linear-gradient(180deg, #0d2145 0%, #132d59 35%, #eaf1fb 100%);
+            color: #1f2937;
+            min-height: 100vh;
+        }
+
+        .container { width: 92%; max-width: 1400px; margin: 24px auto 40px; }
+
+        /* ===== Hero ===== */
+        .hero {
+            background: linear-gradient(135deg, #0a1a3e 0%, #15356a 50%, #1a4580 100%);
+            padding: 36px 40px; border-radius: 18px; margin-bottom: 20px;
+            box-shadow: 0 12px 40px rgba(10,26,62,0.25), 0 2px 8px rgba(10,26,62,0.1);
+            position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: -50%; left: -10%;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(22,119,255,0.10) 0%, rgba(22,119,255,0.03) 40%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero::after {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 4px; height: 100%;
+            background: linear-gradient(180deg, #1677ff, #60a5fa, #1677ff);
+            border-radius: 0 2px 2px 0;
+            box-shadow: 0 0 12px rgba(22,119,255,0.3);
+        }
+        .hero-top { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; position: relative; z-index: 1; }
+
+        h1 { margin: 0 0 10px 0; font-size: 36px; letter-spacing: 1.5px; color: #ffffff; font-weight: 900; text-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+        h1 .hk-em { color: #60a5fa; font-weight: 900; text-shadow: 0 0 24px rgba(96,165,250,0.35); }
+
+        .subtitle { color: rgba(255,255,255,0.65); line-height: 1.8; font-size: 14px; max-width: 680px; }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 10px 20px; border-radius: 999px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.06));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: #fff; font-weight: 700; font-size: 13px; white-space: nowrap; letter-spacing: 0.5px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 0 20px rgba(96,165,250,0.08);
+        }
+
+        /* ===== Summary（深色金融风） ===== */
+        .summary {
+            background: linear-gradient(180deg, rgba(15,35,70,0.96), rgba(18,42,84,0.98));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 18px 22px; border-radius: 16px; margin-bottom: 18px;
+            box-shadow: 0 4px 24px rgba(10,26,62,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #b8c7e6; line-height: 1.7; font-size: 14px;
+        }
+        .summary-stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 10px; }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 14px; padding: 16px 10px 14px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.25s ease; cursor: default;
+            backdrop-filter: blur(4px);
+        }
+        .stat-card:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 20px rgba(22,119,255,0.06);
+            border-color: rgba(22,119,255,0.15);
+        }
+        .stat-value { font-size: 26px; font-weight: 800; color: #f3f7ff; line-height: 1.2; text-shadow: 0 0 20px rgba(96,165,250,0.15); }
+        .stat-label { font-size: 11px; color: #7f96c7; margin-top: 4px; line-height: 1.3; font-weight: 500; letter-spacing: 0.3px; }
+        .stat-sub { font-size: 11px; color: #60a5fa; margin-top: 2px; font-weight: 600; line-height: 1.3; }
+
+        .current-theme-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            color: #60a5fa; font-size: 12px; font-weight: 700;
+            border: 1px solid rgba(96,165,250,0.2);
+            backdrop-filter: blur(4px);
+        }
+
+        /* ===== 港股主题入口（深色金融风） ===== */
+        .theme-section {
+            background: rgba(16,42,86,0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 20px 24px 24px; border-radius: 16px; margin-bottom: 18px;
+            box-shadow: 0 4px 24px rgba(10,26,62,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .theme-section:hover { box-shadow: 0 6px 28px rgba(10,26,62,0.3); }
+        .theme-title { font-size: 16px; font-weight: 700; color: #f3f7ff; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .theme-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 14px; }
+
+        .theme-card {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 6px; padding: 22px 12px 18px; border: 1px solid rgba(255,255,255,0.08); border-radius: 18px;
+            background: rgba(255,255,255,0.05);
+            cursor: pointer; transition: all 0.3s ease;
+            text-align: center; user-select: none; position: relative; overflow: hidden;
+            min-height: 140px;
+            backdrop-filter: blur(4px);
+        }
+        .theme-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .theme-card:hover {
+            border-color: rgba(96,165,250,0.3);
+            background: rgba(80,140,255,0.18);
+            transform: translateY(-5px);
+            box-shadow: 0 16px 32px rgba(22,119,255,0.2);
+        }
+        .theme-card:hover::before { opacity: 1; }
+        .theme-card:active { transform: translateY(-2px); }
+        .theme-card.active {
+            border-color: #60a5fa;
+            background: linear-gradient(135deg, rgba(22,119,255,0.2), rgba(22,119,255,0.1));
+            box-shadow: 0 0 18px rgba(66,133,244,0.35), 0 12px 32px rgba(22,119,255,0.15);
+        }
+        .theme-card.active::before { opacity: 1; }
+        .theme-card.active .theme-icon { filter: brightness(1.2); }
+        .theme-card.active .theme-label { color: #60a5fa; }
+
+        .theme-icon { font-size: 30px; line-height: 1; margin-bottom: 4px; transition: filter 0.3s ease; filter: brightness(0.9); }
+        .theme-label { font-size: 14px; font-weight: 700; color: #f3f7ff; line-height: 1.3; transition: color 0.3s ease; }
+        .theme-desc { font-size: 11px; color: #7f96c7; line-height: 1.2; }
+        .theme-stat { font-size: 11px; color: #60a5fa; font-weight: 700; margin-top: 6px; line-height: 1.2; }
+
+        /* ===== 榜单区域（深色金融风格） ===== */
+        .ranking-section {
+            background: linear-gradient(135deg, #0d1b3e 0%, #102a56 50%, #0f1f42 100%);
+            border-radius: 18px; padding: 24px 24px 20px; margin-bottom: 18px;
+            box-shadow: 0 8px 32px rgba(10,26,62,0.2);
+            position: relative; overflow: hidden;
+        }
+        .ranking-section::before {
+            content: ''; position: absolute; top: -30%; right: -10%;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(22,119,255,0.04) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .ranking-header {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            margin-bottom: 14px; padding: 0 2px; position: relative; z-index: 1;
+        }
+        .ranking-title { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0; letter-spacing: 0.5px; text-shadow: 0 0 20px rgba(96,165,250,0.1); }
+        .ranking-subtitle { font-size: 12px; color: rgba(255,255,255,0.5); margin: 3px 0 0 0; }
+
+        /* ===== Pagination ===== */
+        .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin: 0 0 14px; }
+        .page-info { color: rgba(255,255,255,0.6); font-size: 13px; min-width: 88px; text-align: center; }
+        .btn { padding: 8px 16px; border: none; border-radius: 9px; cursor: pointer; font-weight: 700; transition: all 0.18s ease; font-size: 13px; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn:disabled:hover { transform: none; }
+        .btn-primary { background: linear-gradient(135deg, #1677ff, #0d47a1); color: white; box-shadow: 0 2px 8px rgba(22,119,255,0.2); }
+        .btn-primary:hover { box-shadow: 0 4px 14px rgba(22,119,255,0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: #b8c7e6; border: 1px solid rgba(255,255,255,0.08); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); color: #f3f7ff; }
+
+        .btn-dark {
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn-dark:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+        /* ===== Table ===== */
+        .table-card {
+            border-radius: 14px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.03);
+            position: relative; z-index: 1;
+        }
+        table { width: 100%; border-collapse: collapse; background: transparent; }
+        th, td { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px 10px; text-align: center; font-size: 13px; white-space: nowrap; }
+        th {
+            background: rgba(255,255,255,0.06);
+            font-weight: 700; color: rgba(255,255,255,0.7);
+            font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        tbody tr { transition: background 0.15s ease; }
+        tbody tr:hover { background: rgba(255,255,255,0.06); }
+        td { color: rgba(255,255,255,0.85); }
+
+        .row-gold { background: rgba(255,215,0,0.06) !important; }
+        .row-gold:hover { background: rgba(255,215,0,0.10) !important; }
+        .row-silver { background: rgba(192,192,192,0.04) !important; }
+        .row-silver:hover { background: rgba(192,192,192,0.08) !important; }
+
+        .rank { font-weight: 700; color: rgba(255,255,255,0.7); }
+        .stock-name { font-weight: 700; color: #ffffff; }
+
+        .rank-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 26px; height: 26px; border-radius: 6px;
+            font-size: 12px; font-weight: 800;
+        }
+        .rank-badge.gold { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 0 12px rgba(245,158,11,0.3); }
+        .rank-badge.silver { background: linear-gradient(135deg, #9ca3af, #6b7280); box-shadow: 0 0 8px rgba(156,163,175,0.2); }
+
+        .core-tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 4px; vertical-align: middle; line-height: 1.5; }
+        .tag-internet { background: rgba(22,119,255,0.15); color: #60a5fa; }
+        .tag-finance { background: rgba(255,152,0,0.15); color: #ffb74d; }
+        .tag-dividend { background: rgba(0,200,83,0.15); color: #69f0ae; }
+        .tag-consumer { background: rgba(244,67,54,0.12); color: #ef9a9a; }
+        .tag-medical { background: rgba(156,39,176,0.12); color: #ce93d8; }
+        .tag-resource { background: rgba(63,81,181,0.12); color: #9fa8da; }
+
+        .score { font-weight: 800; text-shadow: 0 0 12px rgba(96,165,250,0.08); }
+        .score-bar-wrap { display: inline-flex; align-items: center; gap: 6px; }
+        .score-bar { display: inline-block; width: 44px; height: 7px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; vertical-align: middle; }
+        .score-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+
+        .dividend-high { color: #69f0ae !important; font-weight: 700; }
+        .dividend-super { color: #00e676 !important; font-weight: 800; }
+        .dividend-tag { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(0,200,83,0.12); color: #69f0ae; margin-left: 3px; vertical-align: middle; }
+
+        .risk-cell { max-width: 260px; white-space: normal; text-align: left; }
+        .risk-badge { display: inline-block; padding: 3px 8px; margin: 2px; border-radius: 999px; font-size: 12px; line-height: 1.4; font-weight: 600; }
+        .risk-high { background: rgba(207,19,34,0.15); color: #ff6b6b; }
+        .risk-warn { background: rgba(212,136,6,0.15); color: #ffd54f; }
+        .risk-ok { background: rgba(21,128,61,0.15); color: #69f0ae; }
+        .risk-blue { background: rgba(22,119,255,0.15); color: #60a5fa; }
+
+        /* ===== Controls（浅色分析工具区） ===== */
+        .controls {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 14px 20px; border-radius: 14px; margin-bottom: 18px;
+            box-shadow: 0 2px 12px rgba(15,23,42,0.04);
+            border: 1px solid rgba(232,237,244,0.5);
+            transition: box-shadow 0.2s ease;
+        }
+        .controls:hover { box-shadow: 0 4px 16px rgba(15,23,42,0.06); }
+
+        .controls-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: #374151; }
+
+        .control-row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 8px; }
+
+        .factor-row {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px; align-items: stretch; margin: 8px 0 10px;
+        }
+
+        .factor-group {
+            min-height: 100px; border: 1px solid #eef2f7; border-radius: 12px;
+            padding: 10px 12px; background: #fafcff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .factor-group:hover { border-color: #d0dcec; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+
+        .factor-group-title { margin-bottom: 6px; color: #111827; font-size: 13px; font-weight: 700; text-align: center; }
+        .factor-inputs { display: flex; flex-wrap: nowrap; justify-content: center; gap: 6px 8px; align-items: center; }
+
+        .control-item { display: flex; align-items: center; gap: 6px; color: #374151; font-size: 14px; min-height: 34px; white-space: nowrap; }
+        .factor-group .control-item { gap: 5px; font-size: 12px; }
+        .factor-group input { width: 64px; padding: 6px 7px; }
+        .factor-group .factor-long-label { font-size: 11px; }
+        .control-item label { display: flex; flex-direction: column; gap: 2px; line-height: 1.3; }
+        .factor-hint { color: #6b7280; font-size: 11px; font-weight: 400; white-space: nowrap; }
+
+        input { width: 72px; padding: 7px 8px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; outline: none; transition: border 0.15s ease, box-shadow 0.15s ease; }
+        input:focus { border-color: #1677ff; box-shadow: 0 0 0 3px rgba(22,119,255,0.12); }
+        input[readonly] { color: #6b7280; background: #f3f4f6; cursor: not-allowed; }
+        select { min-width: 110px; padding: 7px 8px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; outline: none; }
+
+        .btn-advanced {
+            padding: 6px 14px; border: 1px dashed #c8d6e5; border-radius: 8px;
+            cursor: pointer; font-weight: 600; font-size: 12px;
+            background: transparent; color: #6b7280; transition: all 0.18s ease;
+        }
+        .btn-advanced:hover { border-color: #1677ff; color: #1677ff; background: #f0f6ff; }
+        .btn-advanced.open { border-style: solid; border-color: #1677ff; color: #1677ff; background: #f0f6ff; }
+
+        .hint { color: #9ca3af; font-size: 12px; line-height: 1.6; }
+
+        .validation-message { display: none; margin: 8px 0 10px; padding: 8px 12px; border: 1px solid #fed7aa; border-radius: 10px; background: #fff7ed; color: #c2410c; font-size: 13px; line-height: 1.6; }
+        input.input-error { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.12); }
+
+        /* ===== 指标说明（浅色分析工具区） ===== */
+        .info-box {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 0; border-radius: 14px; margin-top: 18px;
+            box-shadow: 0 2px 12px rgba(15,23,42,0.04);
+            border: 1px solid rgba(232,237,244,0.5); overflow: hidden;
+        }
+        .info-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 14px 20px; border: none; background: transparent; cursor: pointer; font-size: 14px; font-weight: 700; color: #374151; transition: background 0.15s ease; }
+        .info-toggle:hover { background: #f8fafc; }
+        .info-toggle .arrow { transition: transform 0.2s ease; font-size: 14px; }
+        .info-toggle .arrow.open { transform: rotate(180deg); }
+        .info-content { padding: 0 24px 24px; display: none; }
+        .info-content.open { display: block; }
+
+        .section-title { margin: 0 0 18px 0; font-size: 20px; color: #111827; }
+        .info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+        .info-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 17px; background: #fbfcfe; transition: all 0.18s ease; }
+        .info-card:hover { box-shadow: 0 8px 18px rgba(15,23,42,0.07); transform: translateY(-2px); background: #ffffff; }
+        .info-card h3 { margin: 0 0 14px 0; font-size: 16px; color: #1677ff; }
+        .info-item { margin-bottom: 12px; line-height: 1.8; font-size: 14px; color: #4b5563; }
+        .info-item:last-child { margin-bottom: 0; }
+        .info-label { font-weight: 700; color: #111827; }
+        .formula-text { color: #374151; font-family: Consolas, Monaco, monospace; font-size: 13px; background: #f0f3f8; padding: 5px 8px; border-radius: 7px; display: inline-block; margin-top: 5px; line-height: 1.5; }
+        .strategy-note { margin-top: 18px; color: #4b5563; line-height: 1.9; font-size: 14px; background: #f8fafc; border-radius: 12px; padding: 14px 16px; border: 1px solid #edf2f7; }
+
+        .footer { margin-top: 18px; color: #6b7280; font-size: 13px; line-height: 1.8; padding: 0 2px; }
+        .loading { text-align: center; padding: 34px; color: rgba(255,255,255,0.5); }
+        .error { text-align: center; padding: 34px; color: #ff6b6b; }
+
+        .nav-links { display: flex; gap: 12px; align-items: center; }
+        .nav-links a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 14px; font-weight: 600; transition: color 0.15s ease; }
+        .nav-links a:hover { color: #ffffff; text-decoration: underline; }
+
+        @media (max-width: 1250px) {
+            .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .hero-top { flex-direction: column; }
+            .factor-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .theme-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+            .summary-stats { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .container { width: 96%; margin: 16px auto 30px; }
+            h1 { font-size: 26px; letter-spacing: 1px; }
+            .hero, .controls, .theme-section, .info-box, .summary, .ranking-section { border-radius: 14px; }
+            .hero { padding: 22px; }
+            .info-grid { grid-template-columns: 1fr; }
+            .factor-row { grid-template-columns: 1fr; }
+            .theme-grid {
+                display: flex; gap: 12px; overflow-x: auto;
+                padding-bottom: 8px; scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+            .theme-grid .theme-card {
+                flex: 0 0 150px; scroll-snap-align: start; min-height: 130px;
+            }
+            .summary-stats { grid-template-columns: repeat(2, 1fr); }
+            .table-card { overflow-x: auto; }
+            table { min-width: 1200px; }
+            .controls { padding: 14px; }
+            .theme-section { padding: 16px 16px 20px; }
+            .ranking-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .ranking-section { padding: 18px 16px 16px; }
+            .stat-value { font-size: 22px; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <!-- ===== Hero ===== -->
+    <div class="hero">
+        <div class="hero-top">
+            <div>
+                <h1><span class="hk-em">港股</span>核心资产分析</h1>
+                <div class="subtitle">
+                    默认策略：综合考虑估值、盈利能力、成长性和分红水平，筛选可能被低估且基本面相对稳健的港股核心资产。
+                    <br>
+                    本系统仅用于学习和辅助分析，不构成投资建议。
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+                <span class="hero-badge">⚡ 稳健价值策略 V1</span>
+                <div class="nav-links">
+                    <a href="/">🏠 首页</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 市场概览 ===== -->
+    <div class="summary" id="summary">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-weight:700;color:#0d1b3e;font-size:14px;">📋 市场概览</span>
+            <span class="current-theme-badge" id="currentThemeBadge">🏷️ 全市场</span>
+        </div>
+        <div class="summary-stats" id="summaryStats">
+            <div class="stat-card">
+                <div class="stat-value" id="statPoolSize">-</div>
+                <div class="stat-label">股票池规模</div>
+                <div class="stat-sub">港股核心资产池</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statAvgScore">-</div>
+                <div class="stat-label">平均评分</div>
+                <div class="stat-sub">综合质量评估</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statAvgPE">-</div>
+                <div class="stat-label">平均市盈率</div>
+                <div class="stat-sub" id="statPESub">整体估值合理</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statAvgDY">-</div>
+                <div class="stat-label">平均股息率</div>
+                <div class="stat-sub" id="statDYSub">高于A股平均</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statAvgROE">-</div>
+                <div class="stat-label">平均 ROE</div>
+                <div class="stat-sub" id="statROESub">盈利能力优秀</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statDate">-</div>
+                <div class="stat-label">数据日期</div>
+                <div class="stat-sub">最近更新</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 港股主题入口 ===== -->
+    <div class="theme-section">
+        <div class="theme-title">📊 港股主题精选</div>
+        <div class="theme-grid">
+            <div class="theme-card" onclick="selectTheme('core')">
+                <span class="theme-icon">⭐</span>
+                <span class="theme-label">核心资产</span>
+                <span class="theme-desc">蓝筹精选</span>
+                <span class="theme-stat">全市场</span>
+            </div>
+            <div class="theme-card" onclick="selectTheme('tech')">
+                <span class="theme-icon">💻</span>
+                <span class="theme-label">恒生科技</span>
+                <span class="theme-desc">科技龙头</span>
+                <span class="theme-stat">平均成长 18%</span>
+            </div>
+            <div class="theme-card" onclick="selectTheme('dividend')">
+                <span class="theme-icon">💰</span>
+                <span class="theme-label">高股息红利</span>
+                <span class="theme-desc">稳定现金流</span>
+                <span class="theme-stat">平均股息 6.1%</span>
+            </div>
+            <div class="theme-card" onclick="selectTheme('southbound')">
+                <span class="theme-icon">🌉</span>
+                <span class="theme-label">港股通精选</span>
+                <span class="theme-desc">南向资金偏好</span>
+                <span class="theme-stat">核心资产池</span>
+            </div>
+            <div class="theme-card" onclick="selectTheme('financial')">
+                <span class="theme-icon">🏦</span>
+                <span class="theme-label">金融红利</span>
+                <span class="theme-desc">银行保险</span>
+                <span class="theme-stat">高股息板块</span>
+            </div>
+            <div class="theme-card" onclick="selectTheme('internet')">
+                <span class="theme-icon">🌐</span>
+                <span class="theme-label">互联网</span>
+                <span class="theme-desc">平台经济</span>
+                <span class="theme-stat">科技成长</span>
+            </div>
+            <div class="theme-card" onclick="selectTheme('consumer')">
+                <span class="theme-icon">🛍️</span>
+                <span class="theme-label">消费</span>
+                <span class="theme-desc">品牌消费</span>
+                <span class="theme-stat">消费龙头</span>
+            </div>
+            <div class="theme-card" onclick="selectTheme('medical')">
+                <span class="theme-icon">💊</span>
+                <span class="theme-label">医药</span>
+                <span class="theme-desc">生物医药</span>
+                <span class="theme-stat">创新驱动</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 港股核心资产榜单（深色金融风格） ===== -->
+    <div class="ranking-section">
+        <div class="ranking-header">
+            <div>
+                <h2 class="ranking-title">📈 港股核心资产评分排名</h2>
+                <p class="ranking-subtitle">基于多因子模型综合评分，按总分从高到低排序</p>
+            </div>
+        </div>
+
+        <div class="pagination" id="pagination">
+            <button class="btn btn-dark" id="prevPageBtn" onclick="changePage(-1)" disabled>← 上一页</button>
+            <span class="page-info" id="pageInfo">第 1 / 1 页</span>
+            <button class="btn btn-dark" id="nextPageBtn" onclick="changePage(1)" disabled>下一页 →</button>
+        </div>
+
+        <div class="table-card">
+            <table>
+                <thead id="tableHeader">
+                    <tr id="headerRow">
+                        <th>#</th>
+                        <th>代码</th>
+                        <th>名称</th>
+                        <th>综合评分</th>
+                        <th>市盈率</th>
+                        <th>市净率</th>
+                        <th>ROE</th>
+                        <th>营收增长</th>
+                        <th>净利增长</th>
+                        <th>股息率</th>
+                        <th>风险提示</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <!-- 动态渲染 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== 策略设置（降权，默认折叠） ===== -->
+    <div class="controls">
+        <div class="controls-title">⚙️ 策略权重设置</div>
+
+        <div class="control-row">
+            <div class="control-item">
+                <label>
+                    <span>估值权重</span>
+                    <span class="factor-hint">模块总权重</span>
+                </label>
+                <input type="number" id="valuationWeight" value="35" min="0" max="100" step="1">
+                <span>%</span>
+            </div>
+
+            <div class="control-item">
+                <label>
+                    <span>质量权重</span>
+                    <span class="factor-hint">模块总权重</span>
+                </label>
+                <input type="number" id="qualityWeight" value="40" min="0" max="100" step="1">
+                <span>%</span>
+            </div>
+
+            <div class="control-item">
+                <label>
+                    <span>成长权重</span>
+                    <span class="factor-hint">模块总权重</span>
+                </label>
+                <input type="number" id="growthWeight" value="15" min="0" max="100" step="1">
+                <span>%</span>
+            </div>
+
+            <div class="control-item">
+                <label>
+                    <span>分红权重</span>
+                    <span class="factor-hint">模块总权重</span>
+                </label>
+                <input type="number" id="dividendWeight" value="10" min="0" max="100" step="1">
+                <span>%</span>
+            </div>
+
+            <button class="btn btn-primary" onclick="loadStocks(true)">重新计算</button>
+            <button class="btn btn-secondary" onclick="resetWeights()">恢复默认</button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <button class="btn-advanced" id="advancedToggle" onclick="toggleAdvanced()">
+                📐 展开高级策略设置
+            </button>
+        </div>
+
+        <div class="factor-row" id="factorRow" style="display:none;">
+            <div class="factor-group">
+                <div class="factor-group-title">估值模块内因子权重</div>
+                <div class="factor-inputs">
+                    <div class="control-item">
+                        <label>PE</label>
+                        <input type="number" id="peWeight" value="63" min="0" max="100" step="0.5">
+                        <span>%</span>
+                    </div>
+                    <div class="control-item">
+                        <label>PB</label>
+                        <input type="number" id="pbWeight" value="37" min="0" max="100" step="0.5">
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="factor-group">
+                <div class="factor-group-title">质量模块内因子权重</div>
+                <div class="factor-inputs">
+                    <div class="control-item">
+                        <label>ROE</label>
+                        <input type="number" id="roeWeight" value="100" min="100" max="100" step="1" readonly>
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="factor-group factor-group-growth">
+                <div class="factor-group-title">成长模块内因子权重</div>
+                <div class="factor-inputs">
+                    <div class="control-item">
+                        <label class="factor-long-label">营收增长率</label>
+                        <input type="number" id="revenueGrowthWeight" value="50" min="0" max="100" step="0.5">
+                        <span>%</span>
+                    </div>
+                    <div class="control-item">
+                        <label class="factor-long-label">净利润增长率</label>
+                        <input type="number" id="profitGrowthWeight" value="50" min="0" max="100" step="0.5">
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="factor-group">
+                <div class="factor-group-title">分红模块内因子权重</div>
+                <div class="factor-inputs">
+                    <div class="control-item">
+                        <label>股息率</label>
+                        <input type="number" id="dividendYieldWeight" value="100" min="100" max="100" step="1" readonly>
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="validation-message" id="validationMessage"></div>
+
+        <div class="hint">
+            模块权重控制四类评分在总分中的占比；模块内因子权重控制同一模块内各因子的相对重要性。
+        </div>
+    </div>
+
+    <!-- ===== 指标说明（折叠） ===== -->
+    <div class="info-box">
+        <button class="info-toggle" onclick="toggleInfoBox()">
+            <span>📖 指标说明与策略详情</span>
+            <span class="arrow" id="infoArrow">▼</span>
+        </button>
+        <div class="info-content" id="infoContent">
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>📊 估值模块（权重可调）</h3>
+                    <div class="info-item"><span class="info-label">市盈率 (PE)</span>：滚动市盈率 TTM，越低表示估值越便宜。评分公式：<span class="formula-text">min(PE_base / PE, 1) × 100</span>，PE_base = 20。</div>
+                    <div class="info-item"><span class="info-label">市净率 (PB)</span>：越低表示估值越便宜。评分公式：<span class="formula-text">min(PB_base / PB, 1) × 100</span>，PB_base = 2.0。</div>
+                </div>
+                <div class="info-card">
+                    <h3>🏆 质量模块（权重可调）</h3>
+                    <div class="info-item"><span class="info-label">ROE</span>：净资产收益率，衡量公司盈利能力。评分公式：<span class="formula-text">min(ROE / ROE_base, 1) × 100</span>，ROE_base = 15%。</div>
+                </div>
+                <div class="info-card">
+                    <h3>📈 成长模块（权重可调）</h3>
+                    <div class="info-item"><span class="info-label">营收增长率</span>：最新财报营收同比增长率，反映业务扩张速度。</div>
+                    <div class="info-item"><span class="info-label">净利润增长率</span>：最新财报净利润同比增长率，反映盈利增长能力。</div>
+                </div>
+                <div class="info-card">
+                    <h3>💵 分红模块（权重可调）</h3>
+                    <div class="info-item"><span class="info-label">股息率</span>：每股分红 / 股价，衡量现金回报水平。评分公式：<span class="formula-text">min(DY / DY_base, 1) × 100</span>，DY_base = 3%。</div>
+                </div>
+                <div class="info-card">
+                    <h3>⚠️ 风险标签</h3>
+                    <div class="info-item"><span class="info-label">高风险</span>：市盈率为负（亏损）或 ROE 极低。</div>
+                    <div class="info-item"><span class="info-label">中等风险</span>：部分财务指标表现一般。</div>
+                    <div class="info-item"><span class="info-label">低风险</span>：各项指标相对稳健。</div>
+                </div>
+                <div class="info-card">
+                    <h3>🔍 数据说明</h3>
+                    <div class="info-item"><span class="info-label">数据来源</span>：AKShare / 新浪财经</div>
+                    <div class="info-item"><span class="info-label">更新频率</span>：每日更新</div>
+                    <div class="info-item"><span class="info-label">覆盖范围</span>：恒生指数 + 恒生科技成分股</div>
+                </div>
+            </div>
+            <div class="strategy-note">
+                <strong>📌 策略说明</strong>：本系统采用多因子加权评分模型，综合估值（PE、PB）、质量（ROE）、成长（营收增长率、净利润增长率）和分红（股息率）四大维度，对港股核心资产进行量化评估。用户可根据自身偏好调整各模块权重及模块内因子权重，实现个性化分析。
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>⚠️ 免责声明：本系统提供的所有数据和分析仅供参考，不构成任何投资建议。投资有风险，入市需谨慎。</p>
+        <p>数据来源：AKShare / 新浪财经 | 策略：稳健价值多因子模型</p>
+    </div>
+
+</div>
+
+<script>
+    // ===== 全局状态 =====
+    let allStocks = [];
+    let currentPage = 1;
+    const pageSize = 50;
+    let currentTheme = 'core';
+    let infoBoxOpen = false;
+
+    // ===== 主题配置（基于股票 code 的严格映射） =====
+    // 数据来源: config/hk_stock_pool.json
+    const THEME_CONFIG = {
+        core: {
+            label: '核心资产',
+            codes: ['00001','00002','00003','00005','00006','00008','00010','00011','00012','00014','00016','00017','00019','00027','00066','00083','00101','00175','00241','00267','00288','00291','00316','00322','00388','00669','00700','00762','00780','00857','00883','00902','00939','00941','00981','00992','01038','01088','01093','01099','01109','01113','01209','01211','01299','01347','01357','01378','01398','01810','01876','01898','01928','01929','01997','02007','02015','02018','02020','02269','02313','02318','02319','02331','02333','02338','02359','02382','02388','02601','02628','02688','02899','03328','03690','03888','03908','03968','03988','06030','06060','06160','06618','06862','06969','09618','09626','09633','09660','09888','09899','09961','09988','09992','09999'],
+            weights: { valuation: 35, quality: 40, growth: 15, dividend: 10 },
+            desc: '蓝筹精选'
+        },
+        tech: {
+            label: '恒生科技',
+            codes: ['00020','00268','00303','00354','00700','00772','00780','00799','00981','00992','01024','01347','01357','01797','01810','02013','02015','02018','02382','02400','02518','03888','06618','09618','09626','09888','09961','09988','09999','09660'],
+            weights: { valuation: 25, quality: 35, growth: 25, dividend: 15 },
+            desc: '科技龙头'
+        },
+        dividend: {
+            label: '高股息红利',
+            codes: ['00002','00003','00005','00006','00008','00011','00066','00083','00101','00267','00316','00322','00388','00669','00762','00857','00883','00902','00939','00941','01038','01088','01113','01378','01398','01898','01997','02388','02628','02688','02899','03328','03968','03988'],
+            weights: { valuation: 30, quality: 25, growth: 10, dividend: 35 },
+            desc: '稳定现金流'
+        },
+        southbound: {
+            label: '港股通精选',
+            codes: ['00005','00020','00175','00268','00291','00388','00700','00762','00772','00857','00883','00902','00939','00941','00981','01024','01088','01093','01099','01211','01299','01347','01398','01801','01810','01880','01898','02015','02018','02020','02269','02318','02319','02331','02382','02388','02601','02628','03328','03690','03888','03908','03968','03988','06030','06160','06186','06618','09618','09626','09633','09888','09961','09988','09999'],
+            weights: { valuation: 35, quality: 40, growth: 15, dividend: 10 },
+            desc: '南向资金偏好'
+        },
+        financial: {
+            label: '金融红利',
+            codes: ['00005','00011','00267','00388','00939','01299','01398','02318','02388','02601','02628','03328','03908','03968','03988','06030','06060'],
+            weights: { valuation: 30, quality: 30, growth: 10, dividend: 30 },
+            desc: '银行保险'
+        },
+        internet: {
+            label: '互联网',
+            codes: ['00268','00700','00772','00780','00799','01024','01797','02013','02400','03690','03888','09618','09626','09888','09899','09961','09988','09999'],
+            weights: { valuation: 20, quality: 30, growth: 35, dividend: 15 },
+            desc: '平台经济'
+        },
+        consumer: {
+            label: '消费',
+            codes: ['00175','00288','00291','00322','00992','01109','01209','01579','01876','01928','01929','02020','02313','02319','02331','02333','06186','06862','09633','09922','09992','02518','06969'],
+            weights: { valuation: 30, quality: 40, growth: 20, dividend: 10 },
+            desc: '品牌消费'
+        },
+        medical: {
+            label: '医药',
+            codes: ['00241','01093','01099','01548','01801','01833','02269','02359','06160','06618','09926'],
+            weights: { valuation: 25, quality: 35, growth: 30, dividend: 10 },
+            desc: '生物医药'
+        },
+    };
+
+    // ===== 辅助函数 =====
+    function formatRiskTags(riskTag) {
+        if (!riskTag) return '<span class="risk-badge risk-ok">暂无</span>';
+        const tags = riskTag.split(';').map(t => t.trim()).filter(Boolean);
+        return tags.map(t => {
+            if (t.includes('高') || t.includes('亏损') || t.includes('极低')) {
+                return `<span class="risk-badge risk-high">${t}</span>`;
+            } else if (t.includes('中') || t.includes('一般')) {
+                return `<span class="risk-badge risk-warn">${t}</span>`;
+            } else if (t.includes('低') || t.includes('稳健')) {
+                return `<span class="risk-badge risk-ok">${t}</span>`;
+            }
+            return `<span class="risk-badge risk-blue">${t}</span>`;
+        }).join('');
+    }
+
+    function getStockTag(name) {
+        if (!name) return '';
+        if (name.includes('腾讯') || name.includes('阿里') || name.includes('美团') || name.includes('京东') || name.includes('网易') || name.includes('百度') || name.includes('快手') || name.includes('小米')) {
+            return '<span class="core-tag tag-internet">互联网</span>';
+        }
+        if (name.includes('银行') || name.includes('保险') || name.includes('证券') || name.includes('金融')) {
+            return '<span class="core-tag tag-finance">金融</span>';
+        }
+        if (name.includes('中国移动') || name.includes('中国电信') || name.includes('中国联通') || name.includes('中电') || name.includes('港灯') || name.includes('电能')) {
+            return '<span class="core-tag tag-dividend">高股息</span>';
+        }
+        if (name.includes('消费') || name.includes('蒙牛') || name.includes('农夫山泉') || name.includes('百威') || name.includes('华润啤酒') || name.includes('康师傅') || name.includes('统一') || name.includes('海底捞') || name.includes('安踏') || name.includes('李宁') || name.includes('周大福') || name.includes('申洲')) {
+            return '<span class="core-tag tag-consumer">消费</span>';
+        }
+        if (name.includes('药') || name.includes('医疗') || name.includes('生物') || name.includes('健康')) {
+            return '<span class="core-tag tag-medical">医药</span>';
+        }
+        if (name.includes('石油') || name.includes('煤炭') || name.includes('矿业') || name.includes('能源') || name.includes('有色') || name.includes('钢铁') || name.includes('中海油') || name.includes('中石油') || name.includes('中石化') || name.includes('神华')) {
+            return '<span class="core-tag tag-resource">资源</span>';
+        }
+        return '';
+    }
+
+    function getScoreBarHtml(score) {
+        if (score == null || isNaN(score)) return '<span class="score" style="color:rgba(255,255,255,0.4);">-</span>';
+        const clamped = Math.max(0, Math.min(100, score));
+        let color = '#ef4444';
+        if (clamped >= 80) color = '#60a5fa';
+        else if (clamped >= 60) color = '#4ade80';
+        else if (clamped >= 40) color = '#fbbf24';
+        return `<span class="score-bar-wrap"><span class="score" style="color:${color};">${clamped.toFixed(1)}</span><span class="score-bar"><span class="score-bar-fill" style="width:${clamped}%;background:${color};"></span></span></span>`;
+    }
+
+    function formatDividendYield(dy) {
+        if (dy == null || isNaN(dy)) return '-';
+        const val = parseFloat(dy);
+        if (val >= 8) return `<span class="dividend-super">${val.toFixed(2)}%</span>`;
+        if (val >= 4) return `<span class="dividend-high">${val.toFixed(2)}%</span>`;
+        return `${val.toFixed(2)}%`;
+    }
+
+    function formatPercent(val) {
+        if (val == null || isNaN(val)) return '-';
+        const v = parseFloat(val);
+        if (v > 1000) return `${(v / 100).toFixed(1)}x`;
+        return `${v.toFixed(2)}%`;
+    }
+
+    function formatPE(val) {
+        if (val == null || isNaN(val)) return '-';
+        const v = parseFloat(val);
+        if (v < 0) return `<span style="color:#ff6b6b;">亏损</span>`;
+        if (v > 500) return '>500';
+        return v.toFixed(2);
+    }
+
+    function formatPB(val) {
+        if (val == null || isNaN(val)) return '-';
+        const v = parseFloat(val);
+        return v.toFixed(2);
+    }
+
+    function formatROE(val) {
+        if (val == null || isNaN(val)) return '-';
+        const v = parseFloat(val);
+        if (v < -50) return '<span style="color:#ff6b6b;">亏损</span>';
+        return `${v.toFixed(2)}%`;
+    }
+
+    function formatGrowth(val) {
+        if (val == null || isNaN(val)) return '-';
+        const v = parseFloat(val);
+        if (v < -100) return '<span style="color:#ff6b6b;">大幅下滑</span>';
+        return `${v.toFixed(2)}%`;
+    }
+
+    // ===== 主题选择 =====
+    function selectTheme(theme) {
+        const config = THEME_CONFIG[theme];
+        if (!config) return;
+
+        currentTheme = theme;
+
+        // 更新卡片高亮
+        document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+        const cards = document.querySelectorAll('.theme-card');
+        const themeKeys = Object.keys(THEME_CONFIG);
+        const idx = themeKeys.indexOf(theme);
+        if (idx >= 0 && cards[idx]) cards[idx].classList.add('active');
+
+        // 更新当前主题徽章
+        const badge = document.getElementById('currentThemeBadge');
+        if (badge) badge.textContent = `🏷️ ${config.label}`;
+
+        // 更新榜单标题
+        const rankingTitle = document.querySelector('.ranking-title');
+        if (rankingTitle) {
+            if (theme === 'core') {
+                rankingTitle.textContent = '📈 港股核心资产评分排名';
+            } else {
+                rankingTitle.textContent = `📈 ${config.label}榜单`;
+            }
+        }
+
+        // 更新副标题
+        const rankingSubtitle = document.querySelector('.ranking-subtitle');
+        if (rankingSubtitle) {
+            if (theme === 'core') {
+                rankingSubtitle.textContent = '基于多因子模型综合评分，按总分从高到低排序';
+            } else {
+                rankingSubtitle.textContent = '基于多因子模型综合评分，按总分从高到低排序';
+            }
+        }
+
+        // 设置权重
+        document.getElementById('valuationWeight').value = config.weights.valuation;
+        document.getElementById('qualityWeight').value = config.weights.quality;
+        document.getElementById('growthWeight').value = config.weights.growth;
+        document.getElementById('dividendWeight').value = config.weights.dividend;
+
+        loadStocks(true);
+    }
+
+    // ===== 高级设置折叠 =====
+    function toggleAdvanced() {
+        const row = document.getElementById('factorRow');
+        const btn = document.getElementById('advancedToggle');
+        if (!row || !btn) return;
+        const isOpen = row.style.display !== 'none';
+        row.style.display = isOpen ? 'none' : 'grid';
+        btn.textContent = isOpen ? '📐 展开高级策略设置' : '📐 收起高级策略设置';
+        btn.classList.toggle('open', !isOpen);
+    }
+
+    // ===== 指标说明折叠 =====
+    function toggleInfoBox() {
+        const content = document.getElementById('infoContent');
+        const arrow = document.getElementById('infoArrow');
+        if (!content || !arrow) return;
+        infoBoxOpen = !infoBoxOpen;
+        content.classList.toggle('open', infoBoxOpen);
+        arrow.classList.toggle('open', infoBoxOpen);
+    }
+
+    // ===== 恢复默认权重 =====
+    function resetWeights() {
+        document.getElementById('valuationWeight').value = 35;
+        document.getElementById('qualityWeight').value = 40;
+        document.getElementById('growthWeight').value = 15;
+        document.getElementById('dividendWeight').value = 10;
+        document.getElementById('peWeight').value = 63;
+        document.getElementById('pbWeight').value = 37;
+        document.getElementById('roeWeight').value = 100;
+        document.getElementById('revenueGrowthWeight').value = 50;
+        document.getElementById('profitGrowthWeight').value = 50;
+        document.getElementById('dividendYieldWeight').value = 100;
+        // 关闭高级面板
+        const row = document.getElementById('factorRow');
+        const btn = document.getElementById('advancedToggle');
+        if (row) row.style.display = 'none';
+        if (btn) {
+            btn.textContent = '📐 展开高级策略设置';
+            btn.classList.remove('open');
+        }
+
+        // 重置主题
+        selectTheme('core');
+    }
+
+    // ===== 分页 =====
+    function changePage(delta) {
+        const totalPages = Math.ceil(allStocks.length / pageSize);
+        const newPage = currentPage + delta;
+        if (newPage < 1 || newPage > totalPages) return;
+        currentPage = newPage;
+        renderTable();
+    }
+
+    // ===== 渲染表格 =====
+    function renderTable() {
+        const tbody = document.getElementById('stockTableBody');
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        const pageInfo = document.getElementById('pageInfo');
+
+        if (!tbody) return;
+
+        const totalPages = Math.ceil(allStocks.length / pageSize);
+        const start = (currentPage - 1) * pageSize;
+        const end = Math.min(start + pageSize, allStocks.length);
+        const pageStocks = allStocks.slice(start, end);
+
+        if (prevBtn) prevBtn.disabled = currentPage <= 1;
+        if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+        if (pageInfo) pageInfo.textContent = `第 ${currentPage} / ${totalPages} 页（共 ${allStocks.length} 只）`;
+
+        let html = '';
+        pageStocks.forEach((stock, i) => {
+            const rank = start + i + 1;
+            const score = stock.final_score != null ? parseFloat(stock.final_score) : null;
+            const pe = stock.pe != null ? stock.pe : stock.pe_ttm;
+            const pb = stock.pb;
+            const roe = stock.roe;
+            const revenueGrowth = stock.revenue_growth;
+            const profitGrowth = stock.profit_growth;
+            const dividendYield = stock.dividend_yield;
+
+            let rowClass = '';
+            let rankDisplay = rank;
+            if (rank === 1) {
+                rowClass = 'row-gold';
+                rankDisplay = `<span class="rank-badge gold">🥇</span>`;
+            } else if (rank === 2) {
+                rowClass = 'row-silver';
+                rankDisplay = `<span class="rank-badge silver">🥈</span>`;
+            } else if (rank === 3) {
+                rankDisplay = `<span style="color:#ffd700;font-weight:800;">🥉</span>`;
+            }
+
+            // 普通股票表格行
+            html += `<tr class="${rowClass}">
+                <td class="rank">${rankDisplay}</td>
+                <td>${stock.code || '-'}</td>
+                <td class="stock-name">${stock.name || '-'}${getStockTag(stock.name)}</td>
+                <td>${getScoreBarHtml(score)}</td>
+                <td>${formatPE(pe)}</td>
+                <td>${formatPB(pb)}</td>
+                <td>${formatROE(roe)}</td>
+                <td>${formatGrowth(revenueGrowth)}</td>
+                <td>${formatGrowth(profitGrowth)}</td>
+                <td>${formatDividendYield(dividendYield)}</td>
+                <td class="risk-cell">${formatRiskTags(stock.risk_tag)}</td>
+            </tr>`;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    // ===== 按主题 code 列表筛选股票 =====
+    function filterStocksByTheme(stocks, theme) {
+        const config = THEME_CONFIG[theme];
+        if (!config || !config.codes || config.codes.length === 0) {
+            // 如果没有 code 列表，返回全部
+            return stocks;
+        }
+        const codeSet = new Set(config.codes);
+        return stocks.filter(s => codeSet.has(s.code));
+    }
+
+    // ===== 加载数据 =====
+    async function loadStocks(resetPage = true) {
+        const summary = document.getElementById('summary');
+        const tbody = document.getElementById('stockTableBody');
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        const pageInfo = document.getElementById('pageInfo');
+
+        if (resetPage) currentPage = 1;
+
+        const config = THEME_CONFIG[currentTheme];
+        const themeLabel = config ? config.label : '全市场';
+
+        // 显示加载状态
+        if (summary) {
+            summary.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-weight:700;color:#0d1b3e;font-size:14px;">📋 市场概览</span>
+                    <span class="current-theme-badge" id="currentThemeBadge">🏷️ ${themeLabel}</span>
+                </div>
+                <div class="summary-stats" id="summaryStats">
+                    <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">股票池规模</div><div class="stat-sub">${themeLabel}</div></div>
+                    <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">平均评分</div><div class="stat-sub">综合质量评估</div></div>
+                    <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">平均市盈率</div><div class="stat-sub">整体估值合理</div></div>
+                    <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">平均股息率</div><div class="stat-sub">高于A股平均</div></div>
+                    <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">平均 ROE</div><div class="stat-sub">盈利能力优秀</div></div>
+                    <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">数据日期</div><div class="stat-sub">最近更新</div></div>
+                </div>
+                <div style="text-align:center;padding:12px;color:#6b7280;font-size:14px;">⏳ 数据加载中...</div>
+            `;
+        }
+        const loadingColspan = 11;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="${loadingColspan}" style="text-align:center;padding:34px;color:rgba(255,255,255,0.5);">⏳ 数据加载中...</td></tr>`;
+        if (prevBtn) prevBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
+        if (pageInfo) pageInfo.textContent = '加载中...';
+
+        try {
+            // 读取权重
+            const valuationWeight = parseFloat(document.getElementById('valuationWeight').value) || 35;
+            const qualityWeight = parseFloat(document.getElementById('qualityWeight').value) || 40;
+            const growthWeight = parseFloat(document.getElementById('growthWeight').value) || 15;
+            const dividendWeight = parseFloat(document.getElementById('dividendWeight').value) || 10;
+            const peWeight = parseFloat(document.getElementById('peWeight').value) || 63;
+            const pbWeight = parseFloat(document.getElementById('pbWeight').value) || 37;
+            const roeWeight = parseFloat(document.getElementById('roeWeight').value) || 100;
+            const revenueGrowthWeight = parseFloat(document.getElementById('revenueGrowthWeight').value) || 50;
+            const profitGrowthWeight = parseFloat(document.getElementById('profitGrowthWeight').value) || 50;
+            const dividendYieldWeight = parseFloat(document.getElementById('dividendYieldWeight').value) || 100;
+
+            // 验证权重
+            const msg = document.getElementById('validationMessage');
+            if (msg) {
+                const total = valuationWeight + qualityWeight + growthWeight + dividendWeight;
+                if (Math.abs(total - 100) > 0.01) {
+                    msg.style.display = 'block';
+                    msg.textContent = `⚠️ 模块权重之和为 ${total}%，建议调整为 100% 以获得均衡评分。`;
+                } else {
+                    msg.style.display = 'none';
+                }
+            }
+
+            // 构建请求参数（请求全部数据，前端做主题筛选和分页）
+            const params = new URLSearchParams();
+            params.set('market', 'hk');
+            params.set('valuation_weight', valuationWeight);
+            params.set('quality_weight', qualityWeight);
+            params.set('growth_weight', growthWeight);
+            params.set('dividend_weight', dividendWeight);
+            params.set('pe_weight', peWeight);
+            params.set('pb_weight', pbWeight);
+            params.set('roe_weight', roeWeight);
+            params.set('revenue_growth_weight', revenueGrowthWeight);
+            params.set('profit_growth_weight', profitGrowthWeight);
+            params.set('dividend_yield_weight', dividendYieldWeight);
+            params.set('limit', 200);
+
+            const url = `/stocks?${params.toString()}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            const allApiStocks = data.data || data.records || data || [];
+
+            // 按评分从高到低排序
+            allApiStocks.sort((a, b) => {
+                const sa = parseFloat(a.final_score) || 0;
+                const sb = parseFloat(b.final_score) || 0;
+                return sb - sa;
+            });
+
+            // 按当前主题筛选
+            allStocks = filterStocksByTheme(allApiStocks, currentTheme);
+
+            // 如果当前页超出最大页，自动回退
+            const totalPages = Math.ceil(allStocks.length / pageSize);
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            }
+
+            // 计算统计数据（基于筛选后的股票）
+            const currentTotal = allStocks.length;
+            const scores = allStocks.map(s => parseFloat(s.final_score)).filter(v => !isNaN(v));
+            const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+            const peValues = allStocks.map(s => parseFloat(s.pe != null ? s.pe : s.pe_ttm)).filter(v => !isNaN(v) && v > 0);
+            const avgPE = peValues.length > 0 ? peValues.reduce((a, b) => a + b, 0) / peValues.length : 0;
+            const dyValues = allStocks.map(s => parseFloat(s.dividend_yield)).filter(v => !isNaN(v) && v > 0);
+            const avgDY = dyValues.length > 0 ? dyValues.reduce((a, b) => a + b, 0) / dyValues.length : 0;
+            const roeValues = allStocks.map(s => parseFloat(s.roe)).filter(v => !isNaN(v));
+            const avgROE = roeValues.length > 0 ? roeValues.reduce((a, b) => a + b, 0) / roeValues.length : 0;
+            // 优先使用 API 返回的 date 字段，其次从第一条记录的 update_time 提取
+            const firstRecord = allStocks[0] || {};
+            const updateTime = firstRecord.update_time || '';
+            const dataDate = data.date || (updateTime ? updateTime.slice(0, 10) : '-');
+
+            // 生成副标题
+            let peSub = '整体估值合理';
+            if (avgPE > 25) peSub = '估值偏高';
+            else if (avgPE < 10) peSub = '估值偏低';
+
+            let dySub = '高于A股平均';
+            if (avgDY > 5) dySub = '高股息吸引力';
+            else if (avgDY < 2) dySub = '股息率偏低';
+
+            let roeSub = '盈利能力优秀';
+            if (avgROE > 20) roeSub = '盈利非常强劲';
+            else if (avgROE < 10) roeSub = '盈利偏弱';
+
+            // 更新摘要
+            if (summary) {
+                summary.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                        <span style="font-weight:700;color:#0d1b3e;font-size:14px;">📋 市场概览</span>
+                        <span class="current-theme-badge" id="currentThemeBadge">🏷️ ${themeLabel}</span>
+                    </div>
+                    <div class="summary-stats" id="summaryStats">
+                        <div class="stat-card"><div class="stat-value">${currentTotal}</div><div class="stat-label">股票池规模</div><div class="stat-sub">${themeLabel}主题</div></div>
+                        <div class="stat-card"><div class="stat-value">${avgScore.toFixed(1)}</div><div class="stat-label">平均评分</div><div class="stat-sub">综合质量评估</div></div>
+                        <div class="stat-card"><div class="stat-value">${avgPE.toFixed(2)}</div><div class="stat-label">平均市盈率</div><div class="stat-sub">${peSub}</div></div>
+                        <div class="stat-card"><div class="stat-value">${avgDY.toFixed(2)}%</div><div class="stat-label">平均股息率</div><div class="stat-sub">${dySub}</div></div>
+                        <div class="stat-card"><div class="stat-value">${avgROE.toFixed(2)}%</div><div class="stat-label">平均 ROE</div><div class="stat-sub">${roeSub}</div></div>
+                        <div class="stat-card"><div class="stat-value">${dataDate}</div><div class="stat-label">数据日期</div><div class="stat-sub">最近更新</div></div>
+                    </div>
+                `;
+            }
+
+            renderTable();
+
+        } catch (err) {
+            console.error('加载失败:', err);
+            if (summary) {
+                summary.innerHTML += `<div style="text-align:center;padding:12px;color:#c41d1d;font-size:14px;">❌ 请求失败，请确认 FastAPI 服务正在运行。</div>`;
+            }
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:34px;color:#ff6b6b;">❌ 请求失败，请确认 FastAPI 服务正在运行。</td></tr>`;
+            }
+        }
+    }
+
+    // ===== 页面加载 =====
+    document.addEventListener('DOMContentLoaded', () => {
+        // 默认选中核心资产
+        selectTheme('core');
+    });
+</script>
+
+</body>
+</html>

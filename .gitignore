@@ -1,16 +1,20 @@
+# Python 缓存
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 
+# 虚拟环境
 .env
 .venv/
 venv/
 env/
 
+# 实际配置（包含数据库密码等敏感信息）
 config.py
 config/config.py
 
+# 测试缓存
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -20,17 +24,30 @@ config/config.py
 logs/
 *.log
 
+# 备份文件
+*.bak
+*.bak2
+*.bak3
+*.bak4
+*.bak5
+*.bak6
+
 # 美股缓存数据（自动生成）
-data/us_stocks/latest.json
-data/us_stocks/staging.json
-data/us_stocks/backup.json
-data/us_stocks/cache/
-data/us_stocks/raw/
+data/us_stocks/
+
+# 港股缓存数据（自动生成）
+data/hk_stock/
 
 # 股票池数据（自动生成）
 data/stock_pool.csv
 data/full_stock_pool.csv
+data/sp500_symbols.csv
 
-# 系统配置
+# 系统配置（含服务器路径等敏感信息）
 scripts/update-us-stocks.service
 scripts/update-us-stocks.timer
+scripts/update-hk-stocks.service
+scripts/update-hk-stocks.timer
+
+# 计划文档（开发中间产物）
+plans/
